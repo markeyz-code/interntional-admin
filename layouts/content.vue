@@ -104,12 +104,7 @@
         <p class="text-sm text-gray-500">Loading {{ businessInfo.name }} ecosystem data</p>
       </div>
 
-      <header class="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 flex-shrink-0">
-        <div class="flex items-center gap-4">
-          <ClientOnly>
-            <UiDateRangePicker v-model="dateRange" class="z-50" />
-          </ClientOnly>
-        </div>
+      <header class="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-end px-6 flex-shrink-0">
         <div class="flex items-center space-x-3">
           <span class="text-sm font-medium text-gray-700">Super Admin</span>
           <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-700 text-xs font-bold">
@@ -118,10 +113,8 @@
         </div>
       </header>
       
-      <main class="flex-1 overflow-auto p-8">
-        <div class="max-w-6xl mx-auto">
-          <slot />
-        </div>
+      <main class="flex-1 overflow-hidden flex flex-col">
+        <slot />
       </main>
     </div>
   </div>
@@ -133,13 +126,10 @@ import { useRouter, useRoute } from 'vue-router';
 import { Users, Folder, Briefcase, LogOut, MessageSquare, CreditCard, Wallet, LayoutDashboard, BarChart2, Shield, Layers, ChevronDown, Check, GraduationCap, FlaskConical, Building2, Calendar, Menu as MenuIcon, X as XIcon } from 'lucide-vue-next';
 import { useAuth } from '@/composables/core/useAuth';
 import { useBusinessContext, type BusinessType } from '@/composables/core/useBusinessContext';
-import { useDateRange } from '@/composables/core/useDateRange';
-import UiDateRangePicker from '@/components/ui/DateRangePicker.vue';
 
 const router = useRouter();
 const { clearAuth } = useAuth();
 const { activeBusiness, businessInfo, sidebarMenu, setBusiness } = useBusinessContext();
-const { dateRange } = useDateRange();
 
 const icons: Record<string, any> = {
   LayoutDashboard,

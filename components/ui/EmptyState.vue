@@ -22,7 +22,7 @@ defineProps({
     default: 'No records found.'
   },
   icon: {
-    type: Object,
+    type: [Object, Function],
     required: true
   }
 });

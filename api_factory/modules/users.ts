@@ -2,8 +2,8 @@ import { GATEWAY_ENDPOINT_WITH_AUTH, cachedGet } from '../axios.config';
 
 export const usersApi = {
   /** Get all pending users */
-  getPendingUsers() {
-    return cachedGet('/users/pending');
+  getPendingUsers(params?: any) {
+    return cachedGet('/users/pending', { params });
   },
 
   /** Approve a user – starts their 24-month timer */
@@ -17,8 +17,8 @@ export const usersApi = {
   },
 
   /** Get all approved active users */
-  getApprovedUsers() {
-    return cachedGet('/users/approved');
+  getApprovedUsers(params?: any) {
+    return cachedGet('/users/approved', { params });
   },
 
   /** Revoke access for an approved user */

@@ -2,8 +2,8 @@ import { GATEWAY_ENDPOINT_WITH_AUTH, cachedGet } from '../axios.config';
 
 export const jobsApi = {
   /** Get all jobs */
-  getJobs() {
-    return cachedGet('/jobs');
+  getJobs(params?: any) {
+    return cachedGet('/jobs', params);
   },
 
   /** Create a job (Admin) */

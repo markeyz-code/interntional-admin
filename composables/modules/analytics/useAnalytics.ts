@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { useRuntimeConfig } from '#app';
 import { useAuth } from '@/composables/core/useAuth';
+import { useDateRange } from '@/composables/core/useDateRange';
 
 export const useAnalytics = () => {
   const config = useRuntimeConfig();
@@ -11,11 +12,20 @@ export const useAnalytics = () => {
   const recentActivity = ref<any[]>([]);
   const departmentEngagement = ref<any[]>([]);
 
+  const { dateRange } = useDateRange();
+
   const fetchDashboardStats = async () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await fetch(`${config.public.apiBase}/analytics/dashboard`, {
+      let url = `${config.public.apiBase}/analytics/dashboard`;
+      if (dateRange.value.start && dateRange.value.end) {
+        const startStr = dateRange.value.start.toISOString();
+        const endStr = dateRange.value.end.toISOString();
+        url += `?startDate=${encodeURIComponent(startStr)}&endDate=${encodeURIComponent(endStr)}`;
+      }
+
+      const response = await fetch(url, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!response.ok) throw new Error('Failed to fetch analytics');
@@ -73,5 +83,6 @@ export const useAnalytics = () => {
     fetchRecentActivity,
     fetchDepartmentEngagement,
     trackEvent,
+    dateRange,
   };
 };

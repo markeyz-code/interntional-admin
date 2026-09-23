@@ -1,7 +1,8 @@
-import { ref } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { vaultApi } from '@/api_factory/modules/vault';
 import { storageApi } from '@/api_factory/modules/storage';
 import { useCustomToast } from '@/composables/core/useCustomToast';
+import { debounce } from 'lodash-es';
 import axios from 'axios';
 
 export const useManageVault = () => {
@@ -11,18 +12,53 @@ export const useManageVault = () => {
   const uploadProgress = ref(0);
   const deleting = ref<string | null>(null);
   const resources = ref<any[]>([]);
+  const total = ref(0);
+  const totalPages = ref(1);
+
+  const filters = reactive({
+    page: 1,
+    limit: 10,
+    search: '',
+    startDate: '',
+    endDate: '',
+    category: 'All'
+  });
 
   const getResources = async () => {
     loading.value = true;
     try {
-      const { data } = await vaultApi.getResources();
-      resources.value = data;
+      const { data } = await vaultApi.getResources({
+        page: filters.page,
+        limit: filters.limit,
+        search: filters.search || undefined,
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+        category: filters.category || undefined
+      });
+      if (data.data) {
+        resources.value = data.data;
+        total.value = data.total;
+        totalPages.value = data.totalPages;
+      } else {
+        resources.value = data;
+        total.value = data.length;
+        totalPages.value = 1;
+      }
     } catch (err: any) {
       showToast({ title: 'Error', message: 'Failed to fetch resources.', type: 'error' });
     } finally {
       loading.value = false;
     }
   };
+
+  const debouncedFetch = debounce(getResources, 300);
+
+  watch(() => ({ ...filters }), (newVal, oldVal) => {
+    if (newVal.search !== oldVal.search || newVal.startDate !== oldVal.startDate || newVal.endDate !== oldVal.endDate || newVal.category !== oldVal.category) {
+      filters.page = 1;
+    }
+    debouncedFetch();
+  }, { deep: true });
 
   const uploadResource = async (payload: {
     title: string;
@@ -93,5 +129,16 @@ export const useManageVault = () => {
     }
   };
 
-  return { loading, uploadProgress, deleting, resources, getResources, uploadResource, deleteResource };
+  return { 
+    loading, 
+    uploadProgress, 
+    deleting, 
+    resources, 
+    filters,
+    total,
+    totalPages,
+    getResources, 
+    uploadResource, 
+    deleteResource 
+  };
 };

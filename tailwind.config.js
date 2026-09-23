@@ -10,9 +10,14 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+      },
       colors: {
         brand: '#27628C',
         black: '#000000',
+        brandDark: '#1a4361',
+        brandLight: '#eef4f8',
       }
     },
   },

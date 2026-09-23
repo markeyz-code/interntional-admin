@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-white flex">
+  <div class="min-h-screen bg-white flex flex-row-reverse">
     <!-- Image Side -->
     <div class="hidden lg:block lg:w-1/2 relative bg-gray-900">
-      <img src="https://images.unsplash.com/photo-1579154204601-52ee6c23b202?q=80&w=2000&auto=format&fit=crop" alt="Medical Laboratory Admin" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+      <img src="/lab-hero.png" alt="Medical Laboratory Admin" class="absolute inset-0 w-full h-full object-cover opacity-40" />
       <div class="absolute inset-0 flex flex-col justify-between p-12">
-        <img src="~/assets/logo.jpg" class="h-10 w-auto rounded-lg" alt="InternTional Admin" />
+        <img src="/logo-icon.png" class="h-10 w-auto object-contain" alt="Admin Portal" />
         <div class="text-white space-y-4 max-w-md">
           <h2 class="text-4xl font-medium leading-tight">System Management</h2>
           <p class="text-gray-300 font-light">Secure portal for verifying applicants, managing the vault, and overseeing the ecosystem.</p>
@@ -16,7 +16,7 @@
     <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
       <div class="w-full max-w-md">
         <div class="mb-10 lg:hidden text-center">
-          <img src="~/assets/logo-icon.png" class="h-8 w-auto mb-2" alt="InternTional Logo" />
+          <img src="/logo-icon.png" class="h-8 w-auto mb-2 object-contain mx-auto" alt="Admin Logo" />
         </div>
         
         <h2 class="text-3xl font-medium text-gray-900 mb-2">Admin Sign In</h2>

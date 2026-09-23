@@ -3,7 +3,7 @@ import axios from 'axios';
 const getBaseUrl = () => {
   return process.env.NODE_ENV === 'production'
     ? 'https://api.interntional.medlabconvo.com/api/v1'
-    : 'http://localhost:3001/api/v1';
+    : 'http://localhost:4000/api/v1';
 };
 
 export const GATEWAY_ENDPOINT = axios.create({
@@ -47,12 +47,26 @@ const getToken = () => {
   return localStorage.getItem('admin_token');
 };
 
+const getActiveBusiness = () => {
+  if (typeof document === 'undefined') return 'internTional';
+  const match = document.cookie.match(new RegExp('(^| )active_business=([^;]+)'));
+  if (match) return decodeURIComponent(match[2]);
+  return 'internTional';
+};
+
 GATEWAY_ENDPOINT_WITH_AUTH.interceptors.request.use(
   (config) => {
     const token = getToken();
+    const business = getActiveBusiness();
+    
     if (token && config.headers) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    
+    if (config.headers) {
+      config.headers['x-business'] = business;
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)

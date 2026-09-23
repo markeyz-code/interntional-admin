@@ -6,9 +6,12 @@
         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Roles & Permissions</h1>
         <p class="text-sm text-gray-500 mt-1">Manage user roles, department assignments, and granular permissions across the platform.</p>
       </div>
-      <button @click="refreshAll" class="px-4 py-2 text-sm font-medium bg-brand text-white rounded hover:bg-[#1f4e70] transition-colors">
-        Refresh
-      </button>
+      <div class="flex items-center gap-3">
+        <button @click="refreshAll" class="px-4 py-2 text-sm font-medium bg-brand text-white rounded hover:bg-[#1f4e70] transition-colors">
+          Refresh
+        </button>
+        <UiViewToggle v-model="viewMode" />
+      </div>
     </div>
 
     <!-- Stats Summary -->
@@ -63,23 +66,96 @@
       <p class="text-gray-500 mt-4">Loading users...</p>
     </div>
 
-    <!-- Users Table -->
-    <div v-else class="bg-white border border-gray-200 rounded-xl">
-      <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+    <div v-else class="space-y-6">
+      
+      <!-- Users Header with Filters -->
+      <div class="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-bold text-gray-900">All Users</h2>
-          <p class="text-sm text-gray-500">{{ allUsers.length }} users total</p>
+          <p class="text-sm text-gray-500">{{ total }} users total</p>
         </div>
-        <!-- Search -->
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search by name or email..."
-          class="px-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand/50 w-72"
-        />
+      </div>
+      
+      <UiTableFilters 
+        v-model="filters" 
+        :roleOptions="[
+          { label: 'Admin', value: 'ADMIN' },
+          { label: 'Moderator', value: 'MODERATOR' },
+          { label: 'Department Head', value: 'DEPARTMENT_HEAD' },
+          { label: 'Intern Member', value: 'INTERN_MEMBER' },
+          { label: 'Alumni Member', value: 'ALUMNI_MEMBER' }
+        ]"
+      />
+
+      <!-- Grid Layout -->
+      <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+        <div v-if="loading" class="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+          <UiTableSpinner />
+        </div>
+        <div v-for="user in allUsers" :key="user._id" class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="p-5 flex-1">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 text-sm font-bold flex-shrink-0">
+                  {{ user.firstName?.[0] }}{{ user.lastName?.[0] }}
+                </div>
+                <div class="overflow-hidden">
+                  <h3 class="text-base font-bold text-gray-900 truncate">{{ user.firstName }} {{ user.lastName }}</h3>
+                  <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="space-y-3 mb-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                <span class="px-2.5 py-1 text-xs font-medium rounded-full inline-block" :class="{
+                  'bg-green-100 text-green-700': user.status === 'APPROVED',
+                  'bg-yellow-100 text-yellow-700': user.status === 'PENDING',
+                  'bg-red-100 text-red-700': user.status === 'REJECTED',
+                }">{{ user.status }}</span>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Role</label>
+                <select
+                  :value="user.role"
+                  @change="handleRoleChange(user._id, ($event.target as HTMLSelectElement).value)"
+                  class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-brand/50 bg-white w-full"
+                >
+                  <option v-for="role in roles" :key="role" :value="role">{{ role.replace(/_/g, ' ') }}</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Department</label>
+                <select
+                  :value="user.department || 'GENERAL'"
+                  @change="handleDepartmentChange(user._id, ($event.target as HTMLSelectElement).value)"
+                  class="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-brand/50 bg-white w-full"
+                >
+                  <option v-for="dept in departments" :key="dept" :value="dept">{{ dept.replace(/_/g, ' ') }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gray-50 p-4 border-t border-gray-200 flex items-center justify-between">
+            <span class="text-xs text-gray-500">
+              Last Login: {{ user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never' }}
+            </span>
+            <button
+              @click="openPermissionsModal(user)"
+              class="text-xs font-medium text-brand hover:underline"
+            >
+              {{ (user.permissions || []).length }} permissions
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <!-- List Layout (Table) -->
+      <div v-else-if="viewMode === 'list'" class="bg-white border border-gray-200 rounded-xl overflow-x-auto">
         <table class="w-full text-left">
           <thead>
             <tr class="bg-gray-50 border-b border-gray-200">
@@ -91,8 +167,11 @@
               <th class="p-4 text-xs font-semibold text-gray-500 uppercase">Last Login</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr v-for="user in filteredUsers" :key="user._id" class="hover:bg-gray-50 transition-colors">
+          <tbody class="divide-y divide-gray-100 relative">
+            <div v-if="loading" class="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+              <UiTableSpinner />
+            </div>
+            <tr v-for="user in allUsers" :key="user._id" class="hover:bg-gray-50 transition-colors">
               <td class="p-4">
                 <p class="font-medium text-gray-900 text-sm">{{ user.firstName }} {{ user.lastName }}</p>
                 <p class="text-xs text-gray-500">{{ user.email }}</p>
@@ -137,6 +216,16 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <UiPagination 
+        class="mt-6"
+        v-model:currentPage="filters.page"
+        :totalPages="totalPages"
+        :total="total"
+        :limit="filters.limit"
+      />
+
     </div>
 
     <!-- Permissions Modal -->
@@ -179,12 +268,15 @@ import { ref, computed, onMounted } from 'vue';
 import { useSeoMeta } from '#imports';
 import { useRoles } from '@/composables/modules/roles/useRoles';
 import UiTableSpinner from '@/components/ui/TableSpinner.vue';
+import UiViewToggle from '@/components/ui/ViewToggle.vue';
+import UiTableFilters from '@/components/ui/TableFilters.vue';
+import UiPagination from '@/components/ui/Pagination.vue';
 
 useSeoMeta({ title: 'Roles & Permissions | Admin Dashboard' });
 
-const { loading, allUsers, userStats, fetchAllUsers, fetchUserStats, updateUserRole, updateUserDepartment, updateUserPermissions } = useRoles();
+const { loading, allUsers, userStats, filters, total, totalPages, fetchAllUsers, fetchUserStats, updateUserRole, updateUserDepartment, updateUserPermissions } = useRoles();
 
-const searchQuery = ref('');
+const viewMode = ref<'list' | 'grid'>('list');
 const showPermModal = ref(false);
 const editingUser = ref<any>(null);
 const selectedPermissions = ref<string[]>([]);
@@ -202,14 +294,6 @@ const allPermissions = [
   'manage_enquiries',
   'manage_roles',
 ];
-
-const filteredUsers = computed(() => {
-  if (!searchQuery.value) return allUsers.value;
-  const q = searchQuery.value.toLowerCase();
-  return allUsers.value.filter(u =>
-    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(q)
-  );
-});
 
 const handleRoleChange = async (userId: string, role: string) => {
   await updateUserRole(userId, role);

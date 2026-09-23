@@ -1,6 +1,7 @@
-import { ref } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { useRuntimeConfig } from '#app';
 import { useAuth } from '@/composables/core/useAuth';
+import { debounce } from 'lodash-es';
 
 export const useRoles = () => {
   const config = useRuntimeConfig();
@@ -9,22 +10,58 @@ export const useRoles = () => {
   const error = ref<string | null>(null);
   const allUsers = ref<any[]>([]);
   const userStats = ref<any>(null);
+  const total = ref(0);
+  const totalPages = ref(1);
+
+  const filters = reactive({
+    page: 1,
+    limit: 10,
+    search: '',
+    role: '',
+    department: ''
+  });
 
   const fetchAllUsers = async () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await fetch(`${config.public.apiBase}/users/all`, {
+      const queryParams = new URLSearchParams({
+        page: filters.page.toString(),
+        limit: filters.limit.toString(),
+        ...(filters.search && { search: filters.search }),
+        ...(filters.role && { role: filters.role }),
+        ...(filters.department && { department: filters.department })
+      });
+      const response = await fetch(`${config.public.apiBase}/users/all?${queryParams.toString()}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (!response.ok) throw new Error('Failed to fetch users');
-      allUsers.value = await response.json();
+      const data = await response.json();
+      
+      if (data.data) {
+        allUsers.value = data.data;
+        total.value = data.total;
+        totalPages.value = data.totalPages;
+      } else {
+        allUsers.value = data;
+        total.value = data.length;
+        totalPages.value = 1;
+      }
     } catch (err: any) {
       error.value = err.message;
     } finally {
       loading.value = false;
     }
   };
+
+  const debouncedFetch = debounce(fetchAllUsers, 300);
+
+  watch(() => ({ ...filters }), (newVal, oldVal) => {
+    if (newVal.search !== oldVal.search || newVal.role !== oldVal.role || newVal.department !== oldVal.department) {
+      filters.page = 1;
+    }
+    debouncedFetch();
+  }, { deep: true });
 
   const fetchUserStats = async () => {
     try {
@@ -107,6 +144,9 @@ export const useRoles = () => {
     error,
     allUsers,
     userStats,
+    filters,
+    total,
+    totalPages,
     fetchAllUsers,
     fetchUserStats,
     updateUserRole,
