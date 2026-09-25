@@ -34,5 +34,11 @@ export const useAuth = () => {
     }
   };
 
-  return { token, user, isLoggedIn, initAuth, setAuth, clearAuth };
+  const getToken = () => {
+    if (token.value) return token.value;
+    if (import.meta.client) return localStorage.getItem('admin_token');
+    return null;
+  };
+
+  return { token, user, isLoggedIn, initAuth, setAuth, clearAuth, getToken };
 };

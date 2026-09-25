@@ -19,7 +19,7 @@
           <img src="/logo-icon.png" class="h-8 w-auto mb-2 object-contain mx-auto" alt="Admin Logo" />
         </div>
         
-        <h2 class="text-3xl font-medium text-gray-900 mb-2">Admin Sign In</h2>
+        <h2 class="text-lg font-medium text-gray-900 mb-2">Admin Sign In</h2>
         <p class="text-gray-500 mb-8">Enter your administrative credentials.</p>
 
         <form @submit.prevent="handleLogin" class="space-y-6">

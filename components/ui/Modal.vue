@@ -18,7 +18,7 @@
 
         <!-- Modal Panel -->
         <div 
-          class="relative bg-white rounded-xl shadow-2xl w-full flex flex-col overflow-hidden"
+          class="relative bg-white rounded-xl shadow-2xl w-full flex flex-col"
           :class="maxWidthClass"
         >
           <!-- Header -->
@@ -42,7 +42,7 @@
           </button>
 
           <!-- Body -->
-          <div class="px-6 py-4 overflow-y-auto max-h-[70vh]">
+          <div class="px-6 py-4" style="overflow: visible;">
             <slot />
           </div>
 

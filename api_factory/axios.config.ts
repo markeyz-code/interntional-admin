@@ -23,13 +23,21 @@ export const GATEWAY_ENDPOINT_WITH_AUTH = axios.create({
 const cache = new Map<string, { data: any; expiry: number }>();
 const CACHE_TTL = 60000; // 60 seconds
 
-export const cachedGet = async (url: string, params?: any) => {
-  const key = `${url}?${params ? new URLSearchParams(params).toString() : ''}`;
+export const cachedGet = async (url: string, config?: any) => {
+  // Extract and clean params to remove undefined values before stringifying
+  let paramsStr = '';
+  if (config?.params) {
+    const cleanParams = Object.fromEntries(
+      Object.entries(config.params).filter(([_, v]) => v != null)
+    );
+    paramsStr = new URLSearchParams(cleanParams as any).toString();
+  }
+  const key = `${url}?${paramsStr}`;
   const cached = cache.get(key);
   if (cached && cached.expiry > Date.now()) {
     return { data: cached.data }; // Return cached response
   }
-  const response = await GATEWAY_ENDPOINT_WITH_AUTH.get(url, { params });
+  const response = await GATEWAY_ENDPOINT_WITH_AUTH.get(url, config);
   cache.set(key, { data: response.data, expiry: Date.now() + CACHE_TTL });
   return response;
 };

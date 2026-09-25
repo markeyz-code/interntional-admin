@@ -7,14 +7,14 @@
         <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
           <Clock class="w-8 h-8 text-white" />
         </div>
-        <h2 class="text-2xl font-black">Are you still there?</h2>
+        <h2 class="text-lg font-black">Are you still there?</h2>
       </div>
 
       <!-- Body -->
       <div class="p-6 text-center space-y-4">
         <p class="text-gray-600 text-lg">
           For your security, your session will automatically expire in <br />
-          <strong class="text-red-500 font-bold text-3xl">{{ countdown }}</strong><br />
+          <strong class="text-red-500 font-bold text-lg">{{ countdown }}</strong><br />
           seconds.
         </p>
       </div>

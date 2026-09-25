@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Analytics</h1>
+        <h1 class="text-lg font-bold text-gray-900 tracking-tight">Analytics</h1>
         <p class="text-sm text-gray-500 mt-1">Track visits, interactions, engagement, and platform performance.</p>
       </div>
       <button @click="refreshAll" class="px-4 py-2 text-sm font-medium bg-brand text-white rounded hover:bg-[#1f4e70] transition-colors">
@@ -21,57 +21,57 @@
       <!-- Top KPIs -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <Eye class="w-5 h-5 text-brand" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Page Views</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.todayPageViews.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.todayPageViews.toLocaleString() }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <LogIn class="w-5 h-5 text-green-600" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Logins</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.todayLogins.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.todayLogins.toLocaleString() }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <Download class="w-5 h-5 text-purple-600" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Weekly Downloads</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.weeklyDownloads.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.weeklyDownloads.toLocaleString() }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <Briefcase class="w-5 h-5 text-orange-600" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Weekly Job Clicks</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.weeklyJobClicks.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.weeklyJobClicks.toLocaleString() }}</p>
         </div>
       </div>
 
       <!-- Secondary KPIs -->
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <UserPlus class="w-5 h-5 text-blue-600" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Monthly Signups</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.monthlySignups.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.monthlySignups.toLocaleString() }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <CreditCard class="w-5 h-5 text-green-600" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Monthly Payments</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.monthlyPayments.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.monthlyPayments.toLocaleString() }}</p>
         </div>
         <div class="bg-white border border-gray-200 rounded-xl p-6">
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-2">
             <Activity class="w-5 h-5 text-red-600" />
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Events</span>
           </div>
-          <p class="text-3xl font-bold text-gray-900">{{ dashboardStats.totalEvents.toLocaleString() }}</p>
+          <p class="text-lg font-bold text-gray-900">{{ dashboardStats.totalEvents.toLocaleString() }}</p>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { ref, reactive, watch } from 'vue';
 import { useRuntimeConfig } from '#app';
 import { useCookie } from '#app';
+import { useAuth } from '@/composables/core/useAuth';
 import { debounce } from 'lodash-es';
 
 export const useGetEnquiries = () => {
@@ -10,7 +11,7 @@ export const useGetEnquiries = () => {
   const enquiries = ref<any[]>([]);
   const total = ref(0);
   const totalPages = ref(1);
-  const token = useCookie('auth_token');
+  const { token } = useAuth();
 
   const filters = reactive({
     page: 1,

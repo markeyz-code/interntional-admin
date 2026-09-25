@@ -21,4 +21,9 @@ export const vaultApi = {
   deleteResource(id: string) {
     return GATEWAY_ENDPOINT_WITH_AUTH.delete(`/resources/${id}`);
   },
+
+  /** Update a resource */
+  updateResource(id: string, data: Partial<{ title: string; description: string; category: string; type: string; fileUrl: string }>) {
+    return GATEWAY_ENDPOINT_WITH_AUTH.patch(`/resources/${id}`, data);
+  },
 };

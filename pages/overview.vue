@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-8">
-    <div class="flex justify-between items-end">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 sm:gap-0">
       <div>
-        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Ecosystem Dashboard</h1>
+        <h1 class="text-lg font-black text-gray-900 tracking-tight">Ecosystem Dashboard</h1>
         <p class="text-gray-500 mt-1">Aggregated metrics, revenue, and platform health.</p>
       </div>
-      <div class="flex gap-3">
-        <button class="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors shadow-sm shadow-brand/20">
+      <div class="flex gap-3 w-full sm:w-auto flex-wrap">
+        <button @click="isExportModalOpen = true" class="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors shadow-sm shadow-brand/20 whitespace-nowrap">
           <Download class="w-4 h-4" />
           Export Report
         </button>
@@ -34,8 +34,8 @@
             </span>
           </div>
           <div class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-1 relative z-10">Total Revenue</div>
-          <div class="text-4xl font-black relative z-10">{{ formatCurrency(dashboardStats?.totalRevenue || 0) }}</div>
-          <div class="mt-4 text-sm text-white/70 relative z-10 flex justify-between items-center">
+          <div class="text-2xl font-black relative z-10">{{ formatCurrency(dashboardStats?.totalRevenue || 0) }}</div>
+          <div class="mt-4 text-sm text-white/70 relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
             <span>Monthly Run Rate</span>
             <span class="font-medium text-white">{{ formatCurrency(dashboardStats?.monthlyRevenue || 0) }}</span>
           </div>
@@ -53,8 +53,8 @@
             </span>
           </div>
           <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Users</div>
-          <div class="text-4xl font-black text-gray-900">{{ formatNumber(userStats?.totalUsers || 0) }}</div>
-          <div class="mt-4 text-sm text-gray-500 flex justify-between items-center">
+          <div class="text-2xl font-black text-gray-900">{{ formatNumber(userStats?.totalUsers || 0) }}</div>
+          <div class="mt-4 text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
              <span>Pending Approvals</span>
              <span class="font-bold text-amber-500">{{ userStats?.pendingUsers || 0 }}</span>
           </div>
@@ -72,8 +72,8 @@
             </span>
           </div>
           <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Active Subscriptions</div>
-          <div class="text-4xl font-black text-gray-900">{{ formatNumber(userStats?.activeSubscriptions || 0) }}</div>
-          <div class="mt-4 text-sm text-gray-500 flex justify-between items-center">
+          <div class="text-2xl font-black text-gray-900">{{ formatNumber(userStats?.activeSubscriptions || 0) }}</div>
+          <div class="mt-4 text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
              <span>New this month</span>
              <span class="font-bold text-gray-900">{{ dashboardStats?.monthlySignups || 0 }}</span>
           </div>
@@ -91,8 +91,8 @@
             </span>
           </div>
           <div class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">{{ isCustomRange ? 'Page Views' : 'Today\'s Page Views' }}</div>
-          <div class="text-4xl font-black text-gray-900">{{ formatNumber(dashboardStats?.todayPageViews || 0) }}</div>
-          <div class="mt-4 text-sm text-gray-500 flex justify-between items-center">
+          <div class="text-2xl font-black text-gray-900">{{ formatNumber(dashboardStats?.todayPageViews || 0) }}</div>
+          <div class="mt-4 text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
              <span>{{ isCustomRange ? 'Logins' : 'Today\'s Logins' }}</span>
              <span class="font-bold text-gray-900">{{ dashboardStats?.todayLogins || 0 }}</span>
           </div>
@@ -104,7 +104,7 @@
         
         <!-- Main Revenue Chart (Span 2) -->
         <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div class="flex justify-between items-center mb-6">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
             <div>
               <h2 class="text-lg font-bold text-gray-900">Revenue Over Time</h2>
               <p class="text-sm text-gray-500">Daily revenue for the past 14 days</p>
@@ -125,7 +125,7 @@
             <h2 class="text-lg font-bold text-gray-900">Department Engagement</h2>
             <p class="text-sm text-gray-500">Active users by department</p>
           </div>
-          <div class="h-64 mt-4">
+          <div class="relative w-full h-[300px] mt-4 flex items-center justify-center overflow-hidden">
             <UiChart type="doughnut" :data="departmentChartData" :options="doughnutOptions" />
           </div>
         </div>
@@ -181,6 +181,20 @@
       </div>
 
     </div>
+    <!-- Export Modal -->
+    <UiExportModal
+      :isOpen="isExportModalOpen"
+      :data="recentActivity"
+      :availableFields="[
+        { key: 'event', label: 'Action Type' },
+        { key: 'userId.firstName', label: 'User First Name' },
+        { key: 'userId.lastName', label: 'User Last Name' },
+        { key: 'userId.email', label: 'User Email' },
+        { key: 'createdAt', label: 'Timestamp' }
+      ]"
+      filename="overview_activity_export"
+      @close="isExportModalOpen = false"
+    />
   </div>
 </template>
 
@@ -190,6 +204,7 @@ import { onMounted, computed, ref } from 'vue';
 import { useGetUserStats } from '@/composables/modules/users/useGetUserStats';
 import { useAnalytics } from '@/composables/modules/analytics/useAnalytics';
 import UiTableSpinner from '@/components/ui/TableSpinner.vue';
+import UiExportModal from '@/components/ui/ExportModal.vue';
 import { 
   Users, CreditCard, Activity, DollarSign, TrendingUp, Calendar, Download, 
   BarChart3, MousePointer2, LogIn 
@@ -208,6 +223,7 @@ const { businessInfo } = useBusinessContext();
 const { loading: loadingUsers, stats: userStats, getUserStats } = useGetUserStats();
 const { loading: loadingAnalytics, dashboardStats, recentActivity, fetchDashboardStats, fetchRecentActivity } = useAnalytics();
 const { dateRange } = useDateRange();
+const isExportModalOpen = ref(false);
 
 const isCustomRange = computed(() => !!(dateRange.value.start && dateRange.value.end));
 
@@ -326,6 +342,8 @@ const departmentChartData = computed(() => {
 });
 
 const doughnutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: {
       position: 'right',

@@ -1,6 +1,6 @@
 import { ref, reactive, watch } from 'vue';
 import { useRuntimeConfig } from '#app';
-import { useCookie } from '#app';
+import { useAuth } from '@/composables/core/useAuth';
 import { debounce } from 'lodash-es';
 
 export const useSubscriptions = () => {
@@ -10,7 +10,7 @@ export const useSubscriptions = () => {
   const subscriptions = ref<any[]>([]);
   const total = ref(0);
   const totalPages = ref(1);
-  const token = useCookie('auth_token');
+  const { getToken } = useAuth();
 
   const filters = reactive({
     page: 1,
@@ -33,7 +33,7 @@ export const useSubscriptions = () => {
       if (filters.endDate) queryParams.append('endDate', filters.endDate);
 
       const response = await fetch(`${config.public.apiBase}/subscriptions/all?${queryParams.toString()}`, {
-        headers: { 'Authorization': `Bearer ${token.value}` },
+        headers: { 'Authorization': `Bearer ${getToken()}` },
       });
       if (!response.ok) throw new Error('Failed to fetch subscriptions');
       const data = await response.json();
@@ -70,7 +70,7 @@ export const useSubscriptions = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`,
+          'Authorization': `Bearer ${getToken()}`,
         },
         body: JSON.stringify(data),
       });
@@ -93,7 +93,7 @@ export const useSubscriptions = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`,
+          'Authorization': `Bearer ${getToken()}`,
         },
         body: JSON.stringify(data),
       });
@@ -114,7 +114,7 @@ export const useSubscriptions = () => {
     try {
       const response = await fetch(`${config.public.apiBase}/subscriptions/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token.value}` },
+        headers: { 'Authorization': `Bearer ${getToken()}` },
       });
       if (!response.ok) throw new Error('Failed to delete plan');
       await fetchAll();

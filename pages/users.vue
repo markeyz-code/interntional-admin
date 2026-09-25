@@ -1,11 +1,16 @@
 <template>
   <div class="space-y-6">
-    <div class="bg-white p-6 border border-gray-200 rounded-lg flex justify-between items-center">
+    <div class="bg-white p-6 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Active Users</h1>
+        <h1 class="text-lg font-bold text-gray-900 tracking-tight">Active Users</h1>
         <p class="text-sm text-gray-500 mt-1">Manage approved users across the platform.</p>
       </div>
-      <UiViewToggle v-model="viewMode" />
+      <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+        <button @click="isExportModalOpen = true" class="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors">
+          Export Data
+        </button>
+        <UiViewToggle v-model="viewMode" />
+      </div>
     </div>
 
     <!-- Filters -->
@@ -33,7 +38,7 @@
       <div v-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="user in users" :key="user._id" class="bg-white rounded-lg border border-gray-200 flex flex-col">
           <div class="p-5 flex-1">
-            <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap mb-4">
               <div class="w-10 h-10 rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 text-sm font-bold flex-shrink-0">
                 {{ user.firstName?.[0] }}{{ user.lastName?.[0] }}
               </div>
@@ -68,7 +73,8 @@
 
       <!-- List Layout (Table) -->
       <div v-else-if="viewMode === 'list'" class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+        <div class="w-full overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="px-6 py-4 font-semibold text-gray-900">User</th>
@@ -81,7 +87,7 @@
           <tbody class="divide-y divide-gray-200 bg-white">
             <tr v-for="user in users" :key="user._id" class="hover:bg-gray-50 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
                   <div class="w-8 h-8 rounded bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold flex-shrink-0">
                     {{ user.firstName?.[0] }}{{ user.lastName?.[0] }}
                   </div>
@@ -110,6 +116,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <!-- Pagination -->
@@ -133,12 +140,27 @@
 
     <!-- Confirmation Modal -->
     <UiConfirmationModal 
-      v-model="showConfirmModal"
+      :isOpen="showConfirmModal"
       title="Revoke Access"
-      :description="`Are you sure you want to revoke access for ${selectedUser?.firstName}? They will no longer be able to log in.`"
+      :message="`Are you sure you want to revoke access for ${selectedUser?.firstName}? They will no longer be able to log in.`"
       confirmText="Revoke Access"
-      confirmType="danger"
       @confirm="handleRevoke"
+      @close="showConfirmModal = false"
+    />
+    
+    <UiExportModal
+      :isOpen="isExportModalOpen"
+      :data="users"
+      :availableFields="[
+        { key: 'firstName', label: 'First Name' },
+        { key: 'lastName', label: 'Last Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'role', label: 'Role' },
+        { key: 'department', label: 'Department' },
+        { key: 'createdAt', label: 'Joined Date' }
+      ]"
+      filename="users_export"
+      @close="isExportModalOpen = false"
     />
   </div>
 </template>
@@ -160,11 +182,13 @@ import UiViewToggle from '@/components/ui/ViewToggle.vue';
 import UiTableFilters from '@/components/ui/TableFilters.vue';
 import UiPagination from '@/components/ui/Pagination.vue';
 import UiConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import UiExportModal from '@/components/ui/ExportModal.vue';
 
 const { loading, users, filters, total, totalPages, fetchActiveUsers } = useGetActiveUsers();
 const { loading: revokeLoading, revokeUser } = useRevokeUser();
 
 const viewMode = ref<'list' | 'grid'>('list');
+const isExportModalOpen = ref(false);
 
 // Revoke Confirmation Logic
 const showConfirmModal = ref(false);
@@ -179,6 +203,7 @@ const handleRevoke = () => {
   if (selectedUser.value) {
     revokeUser(selectedUser.value._id, () => {
       fetchActiveUsers(); // Refresh table
+      showConfirmModal.value = false;
     });
   }
 };

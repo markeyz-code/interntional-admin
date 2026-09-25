@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Enquiries</h1>
+        <h1 class="text-lg font-bold text-gray-900 tracking-tight">Enquiries</h1>
         <p class="text-sm text-gray-500 mt-1">Manage messages and inquiries from users.</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
         <UiViewToggle v-model="viewMode" />
       </div>
     </div>
@@ -66,7 +66,8 @@
 
       <!-- List Layout -->
       <div v-else-if="viewMode === 'list'" class="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <table class="w-full text-left">
+        <div class="w-full overflow-x-auto">
+          <table class="w-full text-left">
           <thead>
             <tr class="bg-gray-50 border-b border-gray-200">
               <th class="p-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
@@ -113,6 +114,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
 
       <!-- Pagination -->

@@ -82,6 +82,9 @@ export const useManageVault = () => {
       formData.append('timestamp', sigData.timestamp.toString());
       formData.append('signature', sigData.signature);
       formData.append('folder', sigData.folder);
+      if (sigData.eager) {
+        formData.append('eager', sigData.eager);
+      }
 
       // 3. Upload to Cloudinary
       const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/auto/upload`;
@@ -129,6 +132,24 @@ export const useManageVault = () => {
     }
   };
 
+  const updateResource = async (id: string, payload: any) => {
+    loading.value = true;
+    try {
+      await vaultApi.updateResource(id, payload);
+      showToast({ title: 'Updated', message: 'Resource updated successfully.', type: 'success' });
+      const idx = resources.value.findIndex(r => r._id === id);
+      if (idx !== -1) {
+        resources.value[idx] = { ...resources.value[idx], ...payload };
+      }
+      return true;
+    } catch (err: any) {
+      showToast({ title: 'Error', message: 'Failed to update resource.', type: 'error' });
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return { 
     loading, 
     uploadProgress, 
@@ -139,6 +160,7 @@ export const useManageVault = () => {
     totalPages,
     getResources, 
     uploadResource, 
+    updateResource,
     deleteResource 
   };
 };

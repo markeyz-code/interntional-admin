@@ -1,16 +1,15 @@
 <template>
   <div class="space-y-8 pb-10">
     <!-- Header Area -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
       <div>
-        <h1 class="text-3xl font-black text-gray-900 tracking-tight mb-1">Dashboard Overview</h1>
+        <h1 class="text-lg font-black text-gray-900 tracking-tight mb-1">Dashboard Overview</h1>
         <p class="text-gray-500 font-medium">Welcome back! Here's what's happening today.</p>
       </div>
-      <div class="flex items-center gap-3">
-        <div class="bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm flex items-center gap-2">
-          <Calendar class="w-4 h-4 text-brand" />
-          <span class="text-sm font-bold text-gray-700">Last 30 Days</span>
-        </div>
+      <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+        <ClientOnly>
+          <UiDateRangePicker v-model="dateRange" class="z-50" />
+        </ClientOnly>
         <button @click="fetchStats" class="p-2.5 bg-brand text-white rounded-lg hover:bg-[#1f4e70] shadow-sm transition-all" :class="{'opacity-50 cursor-not-allowed': loading}">
           <RefreshCw class="w-4 h-4" :class="{'animate-spin': loading}" />
         </button>
@@ -86,16 +85,20 @@
           </select>
         </div>
         <div class="h-72 w-full">
-          <Line v-if="chartDataReady" :data="revenueChartData" :options="chartOptions" />
+          <ClientOnly>
+            <Line v-if="chartDataReady" :data="revenueChartData" :options="chartOptions" />
+          </ClientOnly>
         </div>
       </div>
 
       <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
         <h2 class="text-lg font-bold text-gray-900 mb-6">User Distribution</h2>
         <div class="h-64 w-full flex items-center justify-center relative">
-          <Doughnut v-if="chartDataReady" :data="userChartData" :options="doughnutOptions" />
+          <ClientOnly>
+            <Doughnut v-if="chartDataReady" :data="userChartData" :options="doughnutOptions" />
+          </ClientOnly>
           <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span class="text-3xl font-black text-gray-900">{{ userStats.total }}</span>
+            <span class="text-lg font-black text-gray-900">{{ userStats.total }}</span>
             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Users</span>
           </div>
         </div>
@@ -143,7 +146,8 @@
           <UiTableSpinner />
         </div>
         
-        <table v-else-if="pendingUsers.length > 0" class="min-w-full divide-y divide-gray-100 text-sm text-left">
+        <div class="w-full overflow-x-auto" v-else-if="pendingUsers.length > 0">
+          <table class="min-w-full divide-y divide-gray-100 text-sm text-left">
           <thead class="bg-white">
             <tr>
               <th scope="col" class="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider text-[11px]">User</th>
@@ -155,7 +159,7 @@
           <tbody class="divide-y divide-gray-50 bg-white">
             <tr v-for="user in pendingUsers.slice(0, 5)" :key="user._id" class="hover:bg-gray-50/80 transition-colors">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
                   <div class="w-9 h-9 rounded-full bg-brand/10 text-brand flex items-center justify-center text-xs font-bold border border-brand/20">
                     {{ user.firstName?.[0] }}{{ user.lastName?.[0] }}
                   </div>
@@ -192,6 +196,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
 
         <!-- Empty state for pending users -->
         <div v-else class="py-12">
@@ -227,9 +232,11 @@ import { useDashboardStats } from '@/composables/modules/dashboard/useDashboardS
 import { useGetPendingUsers } from '@/composables/modules/users/useGetPendingUsers';
 import { useApproveUser } from '@/composables/modules/users/useApproveUser';
 import { useBusinessContext } from '@/composables/core/useBusinessContext';
+import { useDateRange } from '@/composables/core/useDateRange';
 import UiEmptyState from '@/components/ui/EmptyState.vue';
 import UiTableSpinner from '@/components/ui/TableSpinner.vue';
 import UiConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import UiDateRangePicker from '@/components/ui/DateRangePicker.vue';
 import { watch } from 'vue';
 
 // Register Chart.js components
@@ -238,6 +245,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 useSeoMeta({ title: 'Dashboard | Admin' });
 
 const { activeBusiness } = useBusinessContext();
+const { dateRange } = useDateRange();
 const { loading, userStats, paymentStats, fetchStats } = useDashboardStats();
 const { loading: pendingUsersLoading, pendingUsers, getPendingUsers } = useGetPendingUsers();
 const { loading: approveLoading, approveUser, rejectUser } = useApproveUser();
@@ -279,10 +287,10 @@ onMounted(() => {
   getPendingUsers();
 });
 
-watch(activeBusiness, () => {
+watch([activeBusiness, dateRange], () => {
   fetchStats();
   getPendingUsers();
-});
+}, { deep: true });
 
 // Chart configurations
 const chartDataReady = computed(() => !loading.value);
