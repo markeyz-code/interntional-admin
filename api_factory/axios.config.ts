@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const getBaseUrl = () => {
   return process.env.NODE_ENV === 'production'
-    ? 'https://api.interntional.medlabconvo.com/api/v1'
+    ? process.env.NUXT_PUBLIC_API_BASE
     : 'http://localhost:4000/api/v1';
 };
 
