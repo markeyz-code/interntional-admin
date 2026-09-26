@@ -140,16 +140,23 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
           <input v-model="form.coverImage" type="url" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand focus:border-brand" />
         </div>
-        <div class="grid grid-cols-2 gap-4">
           <div>
             <UiSelect id="evt-status" v-model="form.status" label="Status *" :options="[{ label: 'Upcoming', value: 'upcoming' }, { label: 'Past', value: 'past' }, { label: 'Cancelled', value: 'cancelled' }]" required />
           </div>
-          <div class="flex items-end pb-1">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" v-model="form.registrationOpen" class="rounded border-gray-300 text-brand focus:ring-brand" />
-              <span class="text-sm font-medium text-gray-700">Registration Open</span>
-            </label>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Price (0 for free)</label>
+            <input v-model.number="form.price" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand focus:border-brand" />
           </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" v-model="form.isMembersOnly" class="rounded border-gray-300 text-brand focus:ring-brand" />
+            <span class="text-sm font-medium text-gray-700">Members Only (Requires Subscription)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" v-model="form.registrationOpen" class="rounded border-gray-300 text-brand focus:ring-brand" />
+            <span class="text-sm font-medium text-gray-700">Registration Open</span>
+          </label>
         </div>
         <div class="flex justify-end gap-3 mt-6">
           <button type="button" @click="isModalOpen = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
@@ -249,6 +256,8 @@ const form = ref({
   capacity: 0,
   coverImage: '',
   status: 'upcoming',
+  price: 0,
+  isMembersOnly: false,
   registrationOpen: true,
 });
 
@@ -307,7 +316,7 @@ const copyEventLink = async (evt: any) => {
 
 const openCreateModal = () => {
   isEdit.value = false;
-  form.value = { title: '', description: '', date: '', endDate: '', location: '', speaker: '', type: 'in-person', meetingLink: '', capacity: 0, coverImage: '', status: 'upcoming', registrationOpen: true };
+  form.value = { title: '', description: '', date: '', endDate: '', location: '', speaker: '', type: 'in-person', meetingLink: '', capacity: 0, coverImage: '', status: 'upcoming', price: 0, isMembersOnly: false, registrationOpen: true };
   isModalOpen.value = true;
 };
 
@@ -327,6 +336,8 @@ const openEditModal = (item: any) => {
     capacity: item.capacity || 0,
     coverImage: item.coverImage || '',
     status: item.status,
+    price: item.price || 0,
+    isMembersOnly: item.isMembersOnly || false,
     registrationOpen: item.registrationOpen !== false,
   };
   isModalOpen.value = true;

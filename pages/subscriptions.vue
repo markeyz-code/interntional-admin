@@ -144,9 +144,31 @@
         <UiInput v-model.number="createForm.durationMonths" label="Duration (Months)" type="number" required placeholder="1" />
         <UiTextarea v-model="createForm.description" label="Description" placeholder="Plan details..." />
         
-        <div class="flex items-center gap-2 mt-4">
-          <input type="checkbox" id="isActive" v-model="createForm.isActive" class="rounded border-gray-300 text-brand focus:ring-brand" />
-          <label for="isActive" class="text-sm text-gray-700 font-medium">Plan is Active</label>
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <UiInput v-model.number="createForm.maxMentorshipRequests" label="Max Mentorships/mo" type="number" placeholder="5" />
+          <UiInput v-model.number="createForm.eventDiscountPercentage" label="Event Discount %" type="number" placeholder="10" />
+        </div>
+
+        <div class="mt-4 space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Access Controls</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="createForm.canAccessVault" class="rounded border-gray-300 text-brand focus:ring-brand" />
+              <span class="text-sm text-gray-700">Access Vault</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="createForm.canPostArticles" class="rounded border-gray-300 text-brand focus:ring-brand" />
+              <span class="text-sm text-gray-700">Post Articles</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="createForm.canAccessGlobalCommunity" class="rounded border-gray-300 text-brand focus:ring-brand" />
+              <span class="text-sm text-gray-700">Global Community</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="createForm.isActive" class="rounded border-gray-300 text-brand focus:ring-brand" />
+              <span class="text-sm text-gray-700 font-bold">Plan is Active</span>
+            </label>
+          </div>
         </div>
       </form>
       <template #footer>
@@ -221,6 +243,11 @@ const createForm = ref({
   description: '',
   price: null as number | null,
   durationMonths: 1,
+  maxMentorshipRequests: 0,
+  canAccessVault: false,
+  canPostArticles: false,
+  canAccessGlobalCommunity: false,
+  eventDiscountPercentage: 0,
   isActive: true,
   features: [] as string[]
 });
@@ -228,7 +255,12 @@ const createForm = ref({
 const openCreateModal = () => {
   isEditMode.value = false;
   planToEdit.value = null;
-  createForm.value = { name: '', description: '', price: null, durationMonths: 1, isActive: true, features: [] };
+  createForm.value = { 
+    name: '', description: '', price: null, durationMonths: 1, 
+    maxMentorshipRequests: 0, canAccessVault: false, canPostArticles: false, 
+    canAccessGlobalCommunity: false, eventDiscountPercentage: 0,
+    isActive: true, features: [] 
+  };
   isCreateModalOpen.value = true;
 };
 
@@ -240,6 +272,11 @@ const openEditModal = (plan: any) => {
     description: plan.description || '',
     price: plan.price,
     durationMonths: plan.durationMonths,
+    maxMentorshipRequests: plan.maxMentorshipRequests || 0,
+    canAccessVault: plan.canAccessVault || false,
+    canPostArticles: plan.canPostArticles || false,
+    canAccessGlobalCommunity: plan.canAccessGlobalCommunity || false,
+    eventDiscountPercentage: plan.eventDiscountPercentage || 0,
     isActive: plan.isActive,
     features: plan.features || []
   };
