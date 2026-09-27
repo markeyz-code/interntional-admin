@@ -6,42 +6,100 @@
         <div class="mb-10 lg:hidden text-center">
           <img src="/logo-icon.png" class="h-8 w-auto mb-2 object-contain mx-auto" alt="Admin Logo" />
         </div>
-        
-        <h2 class="text-lg font-medium text-gray-900 mb-2">Admin Sign In</h2>
-        <p class="text-gray-500 mb-8">Enter your administrative credentials.</p>
 
-        <form @submit.prevent="handleLogin" class="space-y-6">
-          <UiInput
-            id="email"
-            label="Admin Email"
-            type="email"
-            v-model="form.email"
-            required
-            placeholder="admin@example.com"
-          />
+        <!-- ── STEP 1: Email + Password ── -->
+        <div v-if="step === 'credentials'">
+          <h2 class="text-2xl font-bold text-gray-900 mb-1">Admin Sign In</h2>
+          <p class="text-gray-500 mb-8 text-sm">Enter your administrative credentials to continue.</p>
 
-          <UiInput
-            id="password"
-            label="Password"
-            type="password"
-            v-model="form.password"
-            required
-            placeholder="••••••••"
-          />
+          <form @submit.prevent="handleLogin" class="space-y-5">
+            <UiInput
+              id="email"
+              label="Admin Email"
+              type="email"
+              v-model="form.email"
+              required
+              placeholder="admin@medlabconvo.com"
+            />
+            <div>
+              <UiInput
+                id="password"
+                label="Password"
+                type="password"
+                v-model="form.password"
+                required
+                placeholder="••••••••"
+              />
+              <div class="mt-2 text-right">
+                <NuxtLink to="/forgot-password" class="text-xs text-brand hover:underline font-medium">
+                  Forgot password?
+                </NuxtLink>
+              </div>
+            </div>
 
-          <div v-if="error" class="text-red-700 text-sm p-4 bg-red-50 border border-red-200 flex items-start gap-3 rounded">
-            <Lock class="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <span>{{ error }}</span>
+            <div v-if="error" class="text-red-700 text-sm p-4 bg-red-50 border border-red-200 flex items-start gap-3 rounded-lg">
+              <ShieldAlert class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" />
+              <span>{{ error }}</span>
+            </div>
+
+            <UiButton type="submit" :loading="loading" class="w-full py-3 text-base font-semibold">
+              Continue →
+            </UiButton>
+          </form>
+        </div>
+
+        <!-- ── STEP 2: OTP Verification ── -->
+        <div v-else-if="step === 'otp'">
+          <div class="mb-6 flex items-center gap-3">
+            <button @click="step = 'credentials'" class="text-gray-400 hover:text-gray-700 transition-colors">
+              <ArrowLeft class="w-5 h-5" />
+            </button>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">Check your email</h2>
+              <p class="text-gray-500 text-sm mt-1">We sent a 6-digit code to <strong>{{ form.email }}</strong></p>
+            </div>
           </div>
 
-          <UiButton
-            type="submit"
-            :loading="loading"
-            class="w-full py-3 text-base font-medium"
-          >
-            Sign In to Dashboard
-          </UiButton>
-        </form>
+          <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex gap-3">
+            <Mail class="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
+            <p class="text-sm text-blue-800">Enter the code from your email to complete sign-in. The code expires in 10 minutes.</p>
+          </div>
+
+          <form @submit.prevent="handleOtpVerify" class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
+              <input
+                v-model="otpValue"
+                type="text"
+                inputmode="numeric"
+                maxlength="6"
+                required
+                placeholder="000000"
+                class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-center text-2xl font-bold tracking-widest focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all"
+                :disabled="verifying"
+              />
+            </div>
+
+            <div v-if="otpError" class="text-red-700 text-sm p-4 bg-red-50 border border-red-200 flex items-start gap-3 rounded-lg">
+              <ShieldAlert class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" />
+              <span>{{ otpError }}</span>
+            </div>
+
+            <UiButton type="submit" :loading="verifying" class="w-full py-3 text-base font-semibold">
+              Verify & Sign In
+            </UiButton>
+
+            <button
+              type="button"
+              @click="resendOtp"
+              :disabled="resendCountdown > 0 || loading"
+              class="w-full text-sm text-gray-500 hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="resendCountdown > 0">Resend code in {{ resendCountdown }}s</span>
+              <span v-else>Didn't receive the code? Resend</span>
+            </button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -51,8 +109,12 @@
       <div class="absolute inset-0 flex flex-col justify-between p-12">
         <img src="/logo-icon.png" class="h-10 w-auto object-contain" alt="Admin Portal" />
         <div class="text-white space-y-4 max-w-md z-10">
-          <h2 class="text-4xl font-medium leading-tight">System Management</h2>
-          <p class="text-gray-300 font-light">Secure portal for verifying applicants, managing the vault, and overseeing the ecosystem.</p>
+          <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 mb-4">
+            <ShieldCheck class="w-3.5 h-3.5" />
+            SECURE ADMIN PORTAL
+          </div>
+          <h2 class="text-4xl font-bold leading-tight">System Management</h2>
+          <p class="text-gray-300 font-light leading-relaxed">Secure portal for verifying applicants, managing the vault, and overseeing the ecosystem. Two-factor authentication required.</p>
         </div>
       </div>
     </div>
@@ -60,20 +122,10 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useSeoMeta } from '#imports';
-
-useSeoMeta({
-  title: 'Admin Login - InternTional',
-  description: 'Sign in to the InternTional admin portal.',
-  ogTitle: 'Admin Login - InternTional',
-  ogDescription: 'Sign in to the InternTional admin portal.',
-  ogImage: 'https://images.unsplash.com/photo-1579154204601-52ee6c23b202?q=80&w=2000&auto=format&fit=crop',
-  twitterCard: 'summary_large_image',
-})
-
-import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Lock } from 'lucide-vue-next';
+import { Lock, ShieldAlert, ShieldCheck, Mail, ArrowLeft } from 'lucide-vue-next';
 import { authApi } from '@/api_factory/modules/auth';
 import { useAuth } from '@/composables/core/useAuth';
 import { useCustomToast } from '@/composables/core/useCustomToast';
@@ -82,24 +134,91 @@ import UiButton from '@/components/ui/Button.vue';
 
 definePageMeta({ layout: 'empty' });
 
+useSeoMeta({
+  title: 'Admin Login - MedLab Convo',
+  description: 'Sign in to the Admin portal with two-factor authentication.',
+});
+
 const router = useRouter();
 const { setAuth } = useAuth();
 const { showToast } = useCustomToast();
 
+const step = ref<'credentials' | 'otp'>('credentials');
 const loading = ref(false);
+const verifying = ref(false);
 const error = ref<string | null>(null);
+const otpError = ref<string | null>(null);
 const form = ref({ email: '', password: '' });
+const otpValue = ref('');
 
+// ── Resend countdown ──────────────────────────────────────
+const resendCountdown = ref(0);
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+const startCountdown = () => {
+  resendCountdown.value = 60;
+  countdownTimer = setInterval(() => {
+    resendCountdown.value--;
+    if (resendCountdown.value <= 0 && countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }, 1000);
+};
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer);
+});
+
+// ── Step 1: Submit credentials ────────────────────────────
 const handleLogin = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const { data } = await authApi.login(form.value);
-    setAuth(data.access_token, { email: form.value.email, role: 'SUPER_ADMIN' });
-    showToast({ title: 'Welcome Admin', message: 'Successfully authenticated.', type: 'success' });
+    await authApi.adminLogin({ email: form.value.email, password: form.value.password });
+    step.value = 'otp';
+    startCountdown();
+    showToast({ title: 'Code sent!', message: `A 6-digit code was sent to ${form.value.email}`, type: 'success' });
+  } catch (err: any) {
+    error.value = err?.response?.data?.message || err?.data?.message || err?.message || 'Authentication failed.';
+  } finally {
+    loading.value = false;
+  }
+};
+
+// ── Step 2: Verify OTP ────────────────────────────────────
+const handleOtpVerify = async () => {
+  if (otpValue.value.length !== 6) {
+    otpError.value = 'Please enter the full 6-digit code.';
+    return;
+  }
+  verifying.value = true;
+  otpError.value = null;
+  try {
+    const { data } = await authApi.adminVerifyOtp({ email: form.value.email, otp: otpValue.value });
+    setAuth(data.access_token, data.user);
+    showToast({ title: 'Welcome!', message: `Signed in as ${data.user?.firstName || 'Admin'}`, type: 'success' });
     router.push('/');
   } catch (err: any) {
-    error.value = err?.data?.message || err?.data?.error || err?.message || 'Authentication failed.';
+    otpError.value = err?.response?.data?.message || err?.data?.message || 'Invalid or expired code. Please try again.';
+    otpValue.value = '';
+  } finally {
+    verifying.value = false;
+  }
+};
+
+// ── Resend OTP ────────────────────────────────────────────
+const resendOtp = async () => {
+  if (resendCountdown.value > 0) return;
+  loading.value = true;
+  try {
+    await authApi.adminLogin({ email: form.value.email, password: form.value.password });
+    startCountdown();
+    otpValue.value = '';
+    otpError.value = null;
+    showToast({ title: 'Code resent!', message: 'A new code has been sent to your email.', type: 'success' });
+  } catch (err: any) {
+    otpError.value = 'Failed to resend code. Please go back and try again.';
   } finally {
     loading.value = false;
   }
