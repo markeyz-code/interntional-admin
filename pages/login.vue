@@ -67,17 +67,24 @@
 
           <form @submit.prevent="handleOtpVerify" class="space-y-5">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Verification Code</label>
-              <input
-                v-model="otpValue"
-                type="text"
-                inputmode="numeric"
-                maxlength="6"
-                required
-                placeholder="000000"
-                class="w-full px-4 py-3.5 border border-gray-300 rounded-lg text-center text-2xl font-bold tracking-widest focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all"
-                :disabled="verifying"
-              />
+              <label class="block text-sm font-medium text-gray-700 mb-3 text-center">Verification Code</label>
+              <div class="flex justify-center gap-2 sm:gap-3">
+                <input
+                  v-for="(digit, index) in 6"
+                  :key="index"
+                  ref="otpInputs"
+                  v-model="otpValues[index]"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="1"
+                  required
+                  class="w-12 h-14 sm:w-14 sm:h-16 border-2 border-gray-300 rounded-xl text-center text-2xl font-bold text-gray-900 focus:border-brand focus:ring-4 focus:ring-brand/20 outline-none transition-all disabled:bg-gray-100 disabled:text-gray-400"
+                  :disabled="verifying"
+                  @input="onOtpInput(index, $event)"
+                  @keydown="onOtpKeydown(index, $event)"
+                  @paste="onOtpPaste($event)"
+                />
+              </div>
             </div>
 
             <div v-if="otpError" class="text-red-700 text-sm p-4 bg-red-50 border border-red-200 flex items-start gap-3 rounded-lg">
@@ -85,7 +92,7 @@
               <span>{{ otpError }}</span>
             </div>
 
-            <UiButton type="submit" :loading="verifying" class="w-full py-3 text-base font-semibold">
+            <UiButton type="submit" :loading="verifying" class="w-full py-3 text-base font-semibold mt-6">
               Verify & Sign In
             </UiButton>
 
@@ -149,7 +156,44 @@ const verifying = ref(false);
 const error = ref<string | null>(null);
 const otpError = ref<string | null>(null);
 const form = ref({ email: '', password: '' });
-const otpValue = ref('');
+
+// ── OTP State & Logic ─────────────────────────────────────
+const otpValues = ref<string[]>(Array(6).fill(''));
+const otpInputs = ref<HTMLInputElement[] | null>(null);
+
+const onOtpInput = (index: number, event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const val = target.value.replace(/[^0-9]/g, '');
+  
+  otpValues.value[index] = val.slice(-1);
+  
+  if (val && index < 5 && otpInputs.value) {
+    otpInputs.value[index + 1].focus();
+  }
+};
+
+const onOtpKeydown = (index: number, event: KeyboardEvent) => {
+  if (event.key === 'Backspace' && !otpValues.value[index] && index > 0 && otpInputs.value) {
+    otpInputs.value[index - 1].focus();
+  }
+};
+
+const onOtpPaste = (event: ClipboardEvent) => {
+  event.preventDefault();
+  const pastedData = event.clipboardData?.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+  if (!pastedData) return;
+  
+  for (let i = 0; i < pastedData.length; i++) {
+    otpValues.value[i] = pastedData[i];
+  }
+  
+  const focusIndex = Math.min(pastedData.length, 5);
+  if (otpInputs.value) {
+    otpInputs.value[focusIndex].focus();
+  }
+};
+
+const getOtpString = () => otpValues.value.join('');
 
 // ── Resend countdown ──────────────────────────────────────
 const resendCountdown = ref(0);
@@ -178,6 +222,12 @@ const handleLogin = async () => {
     await authApi.adminLogin({ email: form.value.email, password: form.value.password });
     step.value = 'otp';
     startCountdown();
+    // Auto-focus first input on next tick
+    setTimeout(() => {
+      if (otpInputs.value && otpInputs.value.length > 0) {
+        otpInputs.value[0].focus();
+      }
+    }, 100);
     showToast({ title: 'Code sent!', message: `A 6-digit code was sent to ${form.value.email}`, type: 'success' });
   } catch (err: any) {
     error.value = err?.response?.data?.message || err?.data?.message || err?.message || 'Authentication failed.';
@@ -188,20 +238,22 @@ const handleLogin = async () => {
 
 // ── Step 2: Verify OTP ────────────────────────────────────
 const handleOtpVerify = async () => {
-  if (otpValue.value.length !== 6) {
+  const finalOtp = getOtpString();
+  if (finalOtp.length !== 6) {
     otpError.value = 'Please enter the full 6-digit code.';
     return;
   }
   verifying.value = true;
   otpError.value = null;
   try {
-    const { data } = await authApi.adminVerifyOtp({ email: form.value.email, otp: otpValue.value });
+    const { data } = await authApi.adminVerifyOtp({ email: form.value.email, otp: finalOtp });
     setAuth(data.access_token, data.user);
     showToast({ title: 'Welcome!', message: `Signed in as ${data.user?.firstName || 'Admin'}`, type: 'success' });
     router.push('/');
   } catch (err: any) {
     otpError.value = err?.response?.data?.message || err?.data?.message || 'Invalid or expired code. Please try again.';
-    otpValue.value = '';
+    otpValues.value = Array(6).fill('');
+    if (otpInputs.value && otpInputs.value.length > 0) otpInputs.value[0].focus();
   } finally {
     verifying.value = false;
   }
@@ -214,7 +266,8 @@ const resendOtp = async () => {
   try {
     await authApi.adminLogin({ email: form.value.email, password: form.value.password });
     startCountdown();
-    otpValue.value = '';
+    otpValues.value = Array(6).fill('');
+    if (otpInputs.value && otpInputs.value.length > 0) otpInputs.value[0].focus();
     otpError.value = null;
     showToast({ title: 'Code resent!', message: 'A new code has been sent to your email.', type: 'success' });
   } catch (err: any) {
