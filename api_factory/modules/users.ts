@@ -25,4 +25,9 @@ export const usersApi = {
   revokeUser(id: string) {
     return GATEWAY_ENDPOINT_WITH_AUTH.patch(`/users/${id}/revoke`);
   },
+
+  /** Get single user by id */
+  getUserById(id: string) {
+    return GATEWAY_ENDPOINT_WITH_AUTH.get(`/users/${id}`);
+  },
 };

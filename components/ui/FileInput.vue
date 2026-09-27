@@ -23,8 +23,11 @@
         <p v-if="hint" class="text-xs text-gray-500 mt-1">{{ hint }}</p>
       </div>
       <div v-else class="flex flex-col items-center">
-        <component :is="successIcon" class="mx-auto h-8 w-8 text-brand mb-2" v-if="successIcon" />
-        <p class="text-sm font-medium text-gray-900 truncate max-w-full">{{ modelValue.name }}</p>
+        <div v-if="previewUrl" class="mb-4">
+          <img :src="previewUrl" class="max-h-32 rounded-lg shadow-sm border border-gray-200 object-contain mx-auto" alt="Preview" />
+        </div>
+        <component :is="successIcon" class="mx-auto h-8 w-8 text-brand mb-2" v-if="successIcon && !previewUrl" />
+        <p class="text-sm font-medium text-gray-900 truncate max-w-full">{{ typeof modelValue === 'string' ? modelValue : modelValue.name }}</p>
         <button type="button" @click.stop="$emit('update:modelValue', null)" class="text-xs text-red-600 hover:underline mt-2">Remove file</button>
       </div>
     </div>
@@ -36,7 +39,7 @@ import { defineProps, defineEmits } from 'vue';
 
 defineProps({
   modelValue: {
-    type: File,
+    type: [File, String],
     default: null
   },
   label: String,
@@ -57,4 +60,15 @@ const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files?.[0]) emit('update:modelValue', target.files[0]);
 };
+
+import { computed } from 'vue';
+
+const previewUrl = computed(() => {
+  if (!props.modelValue) return null;
+  if (typeof props.modelValue === 'string') return props.modelValue;
+  if (props.modelValue instanceof File && props.modelValue.type.startsWith('image/')) {
+    return URL.createObjectURL(props.modelValue);
+  }
+  return null;
+});
 </script>

@@ -178,6 +178,20 @@
               <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
                 <div class="flex items-center justify-end gap-2">
                   <button 
+                    @click="openPreview(user.verificationFileUrl)" 
+                    class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="View Document"
+                  >
+                    <UserCheck class="w-4 h-4" />
+                  </button>
+                  <NuxtLink 
+                    :to="`/users/${user._id}`"
+                    class="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition-colors"
+                    title="View Details"
+                  >
+                    <UsersIcon class="w-4 h-4" />
+                  </NuxtLink>
+                  <button 
                     @click="confirmReject(user._id)" 
                     :disabled="approveLoading === user._id"
                     class="p-2 text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50 transition-colors"
@@ -186,7 +200,7 @@
                     <X class="w-4 h-4" />
                   </button>
                   <button 
-                    @click="handleApprove(user._id)" 
+                    @click="confirmApprove(user._id)" 
                     :disabled="approveLoading === user._id"
                     class="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg disabled:opacity-50 transition-colors"
                     title="Approve"
@@ -212,14 +226,24 @@
       </div>
     </div>
 
-    <!-- Confirmation Modal -->
+    <!-- Reject Confirmation Modal -->
     <UiConfirmationModal
       :isOpen="isRejectModalOpen"
       title="Reject Applicant"
       message="Are you sure you want to reject this applicant?"
       confirmText="Reject"
       @confirm="handleReject"
-      @cancel="closeRejectModal"
+      @close="closeRejectModal"
+    />
+
+    <!-- Approve Confirmation Modal -->
+    <UiConfirmationModal
+      :isOpen="isApproveModalOpen"
+      title="Approve Applicant"
+      message="Are you sure you want to approve this applicant? An email will be sent to them to set up their password."
+      confirmText="Approve"
+      @confirm="handleApprove"
+      @close="closeApproveModal"
     />
 
     <!-- Document Preview Modal -->
@@ -262,6 +286,7 @@ const { loading: pendingUsersLoading, pendingUsers, getPendingUsers } = useGetPe
 const { loading: approveLoading, approveUser, rejectUser } = useApproveUser();
 
 const isRejectModalOpen = ref(false);
+const isApproveModalOpen = ref(false);
 const selectedUserId = ref<string | null>(null);
 
 const isPreviewModalOpen = ref(false);
@@ -287,11 +312,24 @@ const closeRejectModal = () => {
   selectedUserId.value = null;
 };
 
-const handleApprove = async (id: string) => {
-  const result = await approveUser(id);
-  if (result) {
-    getPendingUsers();
-    fetchStats();
+const confirmApprove = (id: string) => {
+  selectedUserId.value = id;
+  isApproveModalOpen.value = true;
+};
+
+const closeApproveModal = () => {
+  isApproveModalOpen.value = false;
+  selectedUserId.value = null;
+};
+
+const handleApprove = async () => {
+  if (selectedUserId.value) {
+    const result = await approveUser(selectedUserId.value);
+    if (result) {
+      getPendingUsers();
+      fetchStats();
+    }
+    closeApproveModal();
   }
 };
 

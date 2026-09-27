@@ -58,11 +58,17 @@
               </div>
             </div>
           </div>
-          <div class="grid gap-0 border-t border-gray-200">
+          <div class="grid grid-cols-2 gap-0 border-t border-gray-200">
+            <NuxtLink 
+              :to="`/users/${user._id}`"
+              class="py-3 text-xs font-medium text-blue-600 hover:bg-blue-50 border-r border-gray-200 transition-colors text-center"
+            >
+              View Details
+            </NuxtLink>
             <button 
               @click="confirmRevoke(user)"
               :disabled="revokeLoading === user._id"
-              class="py-3 text-xs font-medium text-red-600 hover:bg-red-50 border-r border-gray-200 transition-colors disabled:opacity-50"
+              class="py-3 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
             >
               <span v-if="revokeLoading === user._id">Processing...</span>
               <span v-else>Revoke Access</span>
@@ -104,14 +110,22 @@
                 {{ user.department.toLowerCase().replace('_', ' ') }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
-                <button 
-                  @click="confirmRevoke(user)"
-                  :disabled="revokeLoading === user._id"
-                  class="text-red-600 hover:text-red-900 disabled:opacity-50"
-                >
+                <div class="flex items-center justify-end gap-3">
+                  <NuxtLink 
+                    :to="`/users/${user._id}`"
+                    class="text-blue-600 hover:text-blue-900"
+                  >
+                    View Details
+                  </NuxtLink>
+                  <button 
+                    @click="confirmRevoke(user)"
+                    :disabled="revokeLoading === user._id"
+                    class="text-red-600 hover:text-red-900 disabled:opacity-50"
+                  >
                   <span v-if="revokeLoading === user._id">Processing...</span>
                   <span v-else>Revoke</span>
-                </button>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

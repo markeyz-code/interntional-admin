@@ -55,7 +55,13 @@
               </div>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-0 border-t border-gray-200">
+          <div class="grid grid-cols-3 gap-0 border-t border-gray-200">
+            <NuxtLink 
+              :to="`/users/${user._id}`"
+              class="py-3 text-xs font-medium text-blue-600 hover:bg-blue-50 border-r border-gray-200 transition-colors text-center flex items-center justify-center"
+            >
+              Details
+            </NuxtLink>
             <button 
               @click="confirmApprove(user)"
               :disabled="actionLoading === user._id"
@@ -110,6 +116,12 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
                 <div class="flex items-center justify-end gap-3">
+                  <NuxtLink 
+                    :to="`/users/${user._id}`"
+                    class="text-blue-600 hover:text-blue-900"
+                  >
+                    View Details
+                  </NuxtLink>
                   <button 
                     @click="confirmApprove(user)"
                     :disabled="actionLoading === user._id"

@@ -245,6 +245,25 @@
             required 
           />
         </div>
+
+        <!-- Replace Document Section -->
+        <div class="border border-dashed border-gray-300 rounded-lg p-4">
+          <p class="text-sm font-medium text-gray-700 mb-2">Replace Document (optional)</p>
+          <p v-if="editForm.currentFileUrl" class="text-xs text-gray-500 mb-3 flex items-center gap-1">
+            <FileIcon class="w-3 h-3" />
+            Current: <a :href="editForm.currentFileUrl" target="_blank" class="text-brand hover:underline ml-1 truncate max-w-[200px]">View current file</a>
+          </p>
+          <input 
+            type="file" 
+            @change="handleEditFileChange" 
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-brand/10 file:text-brand hover:file:bg-brand/20" 
+          />
+          <p class="text-xs text-gray-400 mt-2">Leave empty to keep existing document</p>
+        </div>
+
+        <div v-if="editUploadProgress > 0 && editUploadProgress < 100" class="w-full bg-gray-200 rounded-full h-2.5">
+          <div class="bg-brand h-2.5 rounded-full transition-all" :style="{ width: editUploadProgress + '%' }"></div>
+        </div>
       </form>
       <template #footer>
         <button type="button" @click="closeEditModal" class="px-4 py-2 text-sm text-gray-700 font-medium hover:bg-gray-100 rounded">Cancel</button>
@@ -276,6 +295,8 @@ import { ref, onMounted } from 'vue';
 import { useSeoMeta } from '#imports';
 import { FileText as FileIcon, Eye, Trash2, Edit2 } from 'lucide-vue-next';
 import { useManageVault } from '@/composables/modules/vault/useManageVault';
+import { storageApi } from '@/api_factory/modules/storage';
+import axios from 'axios';
 import UiTableSpinner from '@/components/ui/TableSpinner.vue';
 import UiEmptyState from '@/components/ui/EmptyState.vue';
 import UiViewToggle from '@/components/ui/ViewToggle.vue';
@@ -347,11 +368,14 @@ const submitUpload = async () => {
 // Edit State
 const isEditModalOpen = ref(false);
 const editingResourceId = ref<string | null>(null);
+const editUploadProgress = ref(0);
 const editForm = ref({
   title: '',
   description: '',
   category: 'Study Guide',
-  type: 'PDF'
+  type: 'PDF',
+  currentFileUrl: '',
+  newFile: null as File | null
 });
 
 const openEditModal = (resource: any) => {
@@ -360,21 +384,74 @@ const openEditModal = (resource: any) => {
     title: resource.title,
     description: resource.description || '',
     category: resource.category,
-    type: resource.type
+    type: resource.type,
+    currentFileUrl: resource.fileUrl || '',
+    newFile: null
   };
+  editUploadProgress.value = 0;
   isEditModalOpen.value = true;
+};
+
+const handleEditFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files?.length) {
+    editForm.value.newFile = target.files[0];
+  }
 };
 
 const closeEditModal = () => {
   isEditModalOpen.value = false;
   editingResourceId.value = null;
+  editForm.value = { title: '', description: '', category: 'Study Guide', type: 'PDF', currentFileUrl: '', newFile: null };
+  editUploadProgress.value = 0;
 };
 
 const submitEdit = async () => {
-  if (editingResourceId.value) {
-    const success = await updateResource(editingResourceId.value, editForm.value);
-    if (success) closeEditModal();
+  if (!editingResourceId.value) return;
+  
+  let fileUrl: string | undefined = undefined;
+
+  // If a new file was selected, upload it first
+  if (editForm.value.newFile) {
+    try {
+      loading.value = true;
+      editUploadProgress.value = 0;
+      
+      const { data: sigData } = await storageApi.getUploadSignature({ folder: 'interntional/vault' });
+      
+      const formData = new FormData();
+      formData.append('file', editForm.value.newFile);
+      formData.append('api_key', sigData.apiKey);
+      formData.append('timestamp', sigData.timestamp.toString());
+      formData.append('signature', sigData.signature);
+      formData.append('folder', sigData.folder);
+      if (sigData.eager) formData.append('eager', sigData.eager);
+
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/auto/upload`;
+      const { data: uploadResult } = await axios.post(cloudinaryUrl, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          if (e.total) editUploadProgress.value = Math.round((e.loaded / e.total) * 100);
+        },
+      });
+      fileUrl = uploadResult.secure_url;
+    } catch (err) {
+      alert('Failed to upload the new file. Please try again.');
+      loading.value = false;
+      return;
+    }
   }
+
+  const payload: any = {
+    title: editForm.value.title,
+    description: editForm.value.description,
+    category: editForm.value.category,
+    type: editForm.value.type,
+  };
+  if (fileUrl) payload.fileUrl = fileUrl;
+
+  const success = await updateResource(editingResourceId.value, payload);
+  if (success) closeEditModal();
 };
 
 onMounted(() => getResources());

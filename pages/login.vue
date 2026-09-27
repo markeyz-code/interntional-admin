@@ -99,8 +99,7 @@ const handleLogin = async () => {
     showToast({ title: 'Welcome Admin', message: 'Successfully authenticated.', type: 'success' });
     router.push('/');
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Authentication failed.';
-    showToast({ title: 'Access Denied', message: error.value!, type: 'error' });
+    error.value = err?.data?.message || err?.data?.error || err?.message || 'Authentication failed.';
   } finally {
     loading.value = false;
   }
