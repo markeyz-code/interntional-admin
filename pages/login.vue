@@ -1,19 +1,7 @@
 <template>
-  <div class="min-h-screen bg-white flex flex-row-reverse">
-    <!-- Image Side -->
-    <div class="hidden lg:block lg:w-1/2 relative bg-gray-900">
-      <img src="/lab-hero.png" alt="Medical Laboratory Admin" class="absolute inset-0 w-full h-full object-cover opacity-40" />
-      <div class="absolute inset-0 flex flex-col justify-between p-12">
-        <img src="/logo-icon.png" class="h-10 w-auto object-contain" alt="Admin Portal" />
-        <div class="text-white space-y-4 max-w-md">
-          <h2 class="text-4xl font-medium leading-tight">System Management</h2>
-          <p class="text-gray-300 font-light">Secure portal for verifying applicants, managing the vault, and overseeing the ecosystem.</p>
-        </div>
-      </div>
-    </div>
-
+  <div class="min-h-screen w-full bg-white grid grid-cols-1 lg:grid-cols-2">
     <!-- Form Side -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
+    <div class="w-full h-full flex items-center justify-center p-8 sm:p-12 order-2 lg:order-1">
       <div class="w-full max-w-md">
         <div class="mb-10 lg:hidden text-center">
           <img src="/logo-icon.png" class="h-8 w-auto mb-2 object-contain mx-auto" alt="Admin Logo" />
@@ -54,6 +42,18 @@
             Sign In to Dashboard
           </UiButton>
         </form>
+      </div>
+    </div>
+
+    <!-- Image Side -->
+    <div class="hidden lg:block relative bg-gray-900 order-1 lg:order-2 h-screen">
+      <img src="/lab-hero.png" alt="Medical Laboratory Admin" class="absolute inset-0 w-full h-full object-cover opacity-40" />
+      <div class="absolute inset-0 flex flex-col justify-between p-12">
+        <img src="/logo-icon.png" class="h-10 w-auto object-contain" alt="Admin Portal" />
+        <div class="text-white space-y-4 max-w-md z-10">
+          <h2 class="text-4xl font-medium leading-tight">System Management</h2>
+          <p class="text-gray-300 font-light">Secure portal for verifying applicants, managing the vault, and overseeing the ecosystem.</p>
+        </div>
       </div>
     </div>
   </div>
