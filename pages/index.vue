@@ -168,9 +168,12 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">{{ user.email }}</td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <a :href="user.verificationFileUrl" target="_blank" class="px-3 py-1.5 bg-blue-50 text-brand rounded-md hover:bg-blue-100 text-xs font-bold transition-all inline-flex items-center gap-1.5">
+                <button 
+                  @click="openPreview(user.verificationFileUrl)" 
+                  class="px-3 py-1.5 bg-blue-50 text-brand rounded-md hover:bg-blue-100 text-xs font-bold transition-all inline-flex items-center gap-1.5"
+                >
                   <UserCheck class="w-3.5 h-3.5" /> View
-                </a>
+                </button>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
                 <div class="flex items-center justify-end gap-2">
@@ -218,11 +221,19 @@
       @confirm="handleReject"
       @cancel="closeRejectModal"
     />
+
+    <!-- Document Preview Modal -->
+    <UiAssetPreviewModal
+      :isOpen="isPreviewModalOpen"
+      :fileUrl="selectedDocumentUrl"
+      title="Verification Document"
+      @close="closePreviewModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useSeoMeta } from '#imports';
 import { Users as UsersIcon, UserCheck, RefreshCw, Calendar, TrendingUp, DollarSign, CreditCard, UserPlus, X, Check } from 'lucide-vue-next';
 import { Line, Doughnut } from 'vue-chartjs';
@@ -236,8 +247,8 @@ import { useDateRange } from '@/composables/core/useDateRange';
 import UiEmptyState from '@/components/ui/EmptyState.vue';
 import UiTableSpinner from '@/components/ui/TableSpinner.vue';
 import UiConfirmationModal from '@/components/ui/ConfirmationModal.vue';
+import UiAssetPreviewModal from '@/components/ui/AssetPreviewModal.vue';
 import UiDateRangePicker from '@/components/ui/DateRangePicker.vue';
-import { watch } from 'vue';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler);
@@ -252,6 +263,19 @@ const { loading: approveLoading, approveUser, rejectUser } = useApproveUser();
 
 const isRejectModalOpen = ref(false);
 const selectedUserId = ref<string | null>(null);
+
+const isPreviewModalOpen = ref(false);
+const selectedDocumentUrl = ref('');
+
+const openPreview = (url: string) => {
+  selectedDocumentUrl.value = url;
+  isPreviewModalOpen.value = true;
+};
+
+const closePreviewModal = () => {
+  isPreviewModalOpen.value = false;
+  selectedDocumentUrl.value = '';
+};
 
 const confirmReject = (id: string) => {
   selectedUserId.value = id;
