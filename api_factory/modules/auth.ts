@@ -15,6 +15,10 @@ export const authApi = {
   adminVerifyOtp(data: { email: string; otp: string }) {
     return GATEWAY_ENDPOINT.post('/auth/admin/verify-otp', data);
   },
+  /** Step 3: Resend OTP */
+  adminResendOtp(data: { email: string }) {
+    return GATEWAY_ENDPOINT.post('/auth/admin/resend-otp', data);
+  },
   /** Request password reset email */
   adminForgotPassword(data: { email: string }) {
     return GATEWAY_ENDPOINT.post('/auth/admin/forgot-password', data);

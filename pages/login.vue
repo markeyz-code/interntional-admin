@@ -264,7 +264,7 @@ const resendOtp = async () => {
   if (resendCountdown.value > 0) return;
   loading.value = true;
   try {
-    await authApi.adminLogin({ email: form.value.email, password: form.value.password });
+    await authApi.adminResendOtp({ email: form.value.email });
     startCountdown();
     otpValues.value = Array(6).fill('');
     if (otpInputs.value && otpInputs.value.length > 0) otpInputs.value[0].focus();
