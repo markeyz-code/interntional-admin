@@ -13,8 +13,14 @@ export const jobsApi = {
     location: string;
     description: string;
     link: string;
+    status?: string;
   }) {
     return GATEWAY_ENDPOINT_WITH_AUTH.post('/jobs', data);
+  },
+
+  /** Update a job (Admin) */
+  updateJob(id: string, data: any) {
+    return GATEWAY_ENDPOINT_WITH_AUTH.patch(`/jobs/${id}`, data);
   },
 
   /** Delete a job (Admin) */

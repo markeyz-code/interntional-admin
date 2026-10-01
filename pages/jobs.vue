@@ -13,7 +13,7 @@
         >
           Post Job
         </button>
-        <UiViewToggle v-model="viewMode" />
+        <UiViewToggle v-model="viewMode" :allowKanban="true" />
       </div>
     </div>
 
@@ -121,6 +121,35 @@
         </div>
       </div>
 
+      <!-- Kanban Layout -->
+      <div v-else-if="viewMode === 'kanban'" class="flex gap-6 overflow-x-auto pb-4 custom-scrollbar min-h-[500px]">
+        <div v-for="column in kanbanColumns" :key="column.id" 
+             class="flex-shrink-0 w-80 flex flex-col bg-gray-50/50 rounded-xl border border-gray-200"
+             @dragover.prevent
+             @drop="onDrop($event, column.id)">
+          <div class="p-4 border-b border-gray-200 flex items-center justify-between bg-white rounded-t-xl">
+            <h3 class="font-bold text-gray-900 capitalize flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" :class="column.color"></span>
+              {{ column.title }}
+            </h3>
+            <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{{ getJobsByStatus(column.id).length }}</span>
+          </div>
+          <div class="flex-1 p-3 space-y-3 overflow-y-auto">
+            <div v-for="job in getJobsByStatus(column.id)" :key="job._id" 
+                 draggable="true"
+                 @dragstart="onDragStart($event, job)"
+                 class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-grab active:cursor-grabbing hover:border-brand/30 hover:shadow-md transition-all">
+              <h4 class="font-bold text-gray-900 text-sm mb-1 truncate">{{ job.title }}</h4>
+              <p class="text-brand font-medium text-xs mb-3">{{ job.company }}</p>
+              <div class="flex items-center gap-3 text-xs text-gray-500 mt-auto pt-3 border-t border-gray-50">
+                <span class="flex items-center gap-1"><MapPinIcon class="w-3 h-3"/> <span class="truncate max-w-[80px]">{{ job.location }}</span></span>
+                <span class="flex items-center gap-1"><ClockIcon class="w-3 h-3"/> {{ new Date(job.createdAt).toLocaleDateString() }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Pagination -->
       <UiPagination 
         class="mt-6"
@@ -152,9 +181,9 @@
                 Back to Career Hub
               </button>
               <div class="flex items-center gap-3">
-                <a v-if="selectedJob.link" :href="selectedJob.link" target="_blank" class="px-4 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-[#1f4e70] transition-colors shadow-sm flex items-center gap-2">
-                  Apply Now ↗
-                </a>
+                <button @click="viewApplicants" class="px-4 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-[#1f4e70] transition-colors shadow-sm flex items-center gap-2">
+                  View Applicants
+                </button>
                 <button @click="confirmDelete(selectedJob._id); isViewModalOpen = false" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
                   Delete
                 </button>
@@ -205,9 +234,9 @@
                     </div>
                   </div>
                 </div>
-                <a v-if="selectedJob.link" :href="selectedJob.link" target="_blank" class="block w-full text-center px-6 py-3.5 text-sm font-bold text-white bg-brand rounded-xl hover:bg-[#1f4e70] transition-all shadow-lg shadow-brand/20">
-                  Apply for this Position ↗
-                </a>
+                <button @click="viewApplicants" class="w-full text-center px-6 py-3.5 text-sm font-bold text-white bg-brand rounded-xl hover:bg-[#1f4e70] transition-all shadow-lg shadow-brand/20">
+                  View Applicants
+                </button>
               </div>
             </div>
           </div>
@@ -260,8 +289,44 @@ import UiPagination from '@/components/ui/Pagination.vue';
 
 useSeoMeta({ title: 'Career Hub | Admin Dashboard' });
 
-const { loading, creating, deleting, jobs, filters, total, totalPages, fetchJobs, createJob, deleteJob } = useManageJobs();
-const viewMode = ref<'list' | 'grid'>('list');
+const { loading, creating, deleting, jobs, filters, total, totalPages, fetchJobs, createJob, updateJob, deleteJob } = useManageJobs();
+const viewMode = ref<'list' | 'grid' | 'kanban'>('kanban');
+
+// Kanban Logic
+const kanbanColumns = [
+  { id: 'draft', title: 'Draft', color: 'bg-gray-400' },
+  { id: 'open', title: 'Open', color: 'bg-green-500' },
+  { id: 'closed', title: 'Closed', color: 'bg-red-500' }
+];
+
+const getJobsByStatus = (status: string) => {
+  return jobs.value.filter(j => (j.status || 'open') === status);
+};
+
+const onDragStart = (e: DragEvent, job: any) => {
+  if (e.dataTransfer) {
+    e.dataTransfer.setData('jobId', job._id);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+};
+
+const onDrop = async (e: DragEvent, targetStatus: string) => {
+  if (e.dataTransfer) {
+    const jobId = e.dataTransfer.getData('jobId');
+    const job = jobs.value.find(j => j._id === jobId);
+    if (job && (job.status || 'open') !== targetStatus) {
+      // Optimistic update
+      const originalStatus = job.status;
+      job.status = targetStatus;
+      
+      const success = await updateJob(jobId, { status: targetStatus });
+      if (!success) {
+        // Revert on failure
+        job.status = originalStatus;
+      }
+    }
+  }
+};
 
 // View Modal
 const isViewModalOpen = ref(false);
@@ -270,6 +335,10 @@ const selectedJob = ref<any>(null);
 const viewJob = (job: any) => {
   selectedJob.value = job;
   isViewModalOpen.value = true;
+};
+
+const viewApplicants = () => {
+  alert('This job uses an external application link. Applicants are not tracked internally.');
 };
 
 // Delete State

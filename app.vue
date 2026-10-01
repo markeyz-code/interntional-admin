@@ -5,6 +5,7 @@
     </NuxtLayout>
     <ClientOnly>
       <UiSessionTimeoutModal />
+      <CustomModalContainer />
     </ClientOnly>
   </div>
 </template>

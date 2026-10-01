@@ -28,9 +28,12 @@
         <!-- Business Switcher -->
         <div class="relative border-b border-gray-800">
           <button 
-            @click="isBusinessDropdownOpen = !isBusinessDropdownOpen"
-            class="w-full h-16 flex items-center px-4 hover:bg-gray-800 transition-colors focus:outline-none"
-            :class="isSidebarMinimized ? 'justify-center' : 'justify-between'"
+            @click="canSwitchBusiness ? isBusinessDropdownOpen = !isBusinessDropdownOpen : null"
+            class="w-full h-16 flex items-center px-4 transition-colors focus:outline-none"
+            :class="[
+              isSidebarMinimized ? 'justify-center' : 'justify-between',
+              canSwitchBusiness ? 'hover:bg-gray-800 cursor-pointer' : 'cursor-default'
+            ]"
           >
             <div class="flex items-center gap-3 overflow-hidden">
               <div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center flex-shrink-0" :class="businessInfo.theme">
@@ -41,7 +44,7 @@
                 <p class="text-[10px] text-gray-400 truncate uppercase tracking-wider">{{ businessInfo.tagline }}</p>
               </div>
             </div>
-            <ChevronDown v-show="!isSidebarMinimized" class="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" :class="{'rotate-180': isBusinessDropdownOpen}" />
+            <ChevronDown v-if="canSwitchBusiness" v-show="!isSidebarMinimized" class="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform" :class="{'rotate-180': isBusinessDropdownOpen}" />
           </button>
 
           <!-- Dropdown Menu -->
@@ -122,9 +125,9 @@
 
       <header class="hidden md:flex h-16 bg-white border-b border-gray-200 items-center justify-end px-6 flex-shrink-0">
         <div class="flex items-center space-x-3">
-          <span class="text-sm font-medium text-gray-700">Super Admin</span>
-          <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-700 text-xs font-bold">
-            SA
+          <span class="text-sm font-medium text-gray-700">{{ user?.firstName }} {{ user?.lastName }}</span>
+          <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-gray-700 text-xs font-bold uppercase">
+            {{ user?.firstName?.charAt(0) || 'S' }}{{ user?.lastName?.charAt(0) || 'A' }}
           </div>
         </div>
       </header>
@@ -141,13 +144,17 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Users, Folder, Briefcase, LogOut, MessageSquare, CreditCard, Wallet, LayoutDashboard, BarChart2, Shield, Layers, ChevronDown, ChevronLeft, ChevronRight, Check, GraduationCap, FlaskConical, Building2, Calendar, Menu as MenuIcon, X as XIcon } from 'lucide-vue-next';
+import { Users, Folder, Briefcase, LogOut, MessageSquare, CreditCard, Wallet, LayoutDashboard, BarChart2, Shield, Layers, ChevronDown, ChevronLeft, ChevronRight, Check, GraduationCap, FlaskConical, Building2, Calendar, ClipboardList, Menu as MenuIcon, X as XIcon, ShoppingBag, BookOpen, Target } from 'lucide-vue-next';
 import { useAuth } from '@/composables/core/useAuth';
 import { useBusinessContext, type BusinessType } from '@/composables/core/useBusinessContext';
 
 const router = useRouter();
-const { clearAuth } = useAuth();
-const { activeBusiness, businessInfo, sidebarMenu, setBusiness } = useBusinessContext();
+const { user, clearAuth, syncProfile } = useAuth();
+const { activeBusiness, businessInfo, sidebarMenu, setBusiness, canSwitchBusiness } = useBusinessContext();
+
+onMounted(() => {
+  syncProfile();
+});
 
 const icons: Record<string, any> = {
   LayoutDashboard,
@@ -162,7 +169,11 @@ const icons: Record<string, any> = {
   Wallet,
   Building2,
   Calendar,
-  GraduationCap
+  ClipboardList,
+  GraduationCap,
+  ShoppingBag,
+  BookOpen,
+  Target
 };
 
 const getIcon = (iconName: string) => icons[iconName] || LayoutDashboard;

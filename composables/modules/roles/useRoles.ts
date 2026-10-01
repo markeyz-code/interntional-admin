@@ -139,6 +139,61 @@ export const useRoles = () => {
     }
   };
 
+  const inviteAdmin = async (payload: any) => {
+    try {
+      const response = await fetch(`${config.public.apiBase}/users/invitations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to invite team member');
+      }
+      return await response.json();
+    } catch (err: any) {
+      error.value = err.message;
+      throw err;
+    }
+  };
+
+  const createCustomRole = async (payload: { name: string; permissions: string[] }) => {
+    try {
+      const response = await fetch(`${config.public.apiBase}/users/roles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create role');
+      }
+      return await response.json();
+    } catch (err: any) {
+      error.value = err.message;
+      throw err;
+    }
+  };
+
+  const fetchCustomRoles = async () => {
+    try {
+      const response = await fetch(`${config.public.apiBase}/users/roles`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch custom roles');
+      return await response.json();
+    } catch (err: any) {
+      error.value = err.message;
+      return [];
+    }
+  };
+
   return {
     loading,
     error,
@@ -152,5 +207,8 @@ export const useRoles = () => {
     updateUserRole,
     updateUserDepartment,
     updateUserPermissions,
+    inviteAdmin,
+    createCustomRole,
+    fetchCustomRoles,
   };
 };

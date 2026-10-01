@@ -24,17 +24,31 @@
     >
       <LayoutGrid class="w-4 h-4" />
     </button>
+    <button 
+      v-if="allowKanban"
+      @click="$emit('update:modelValue', 'kanban')"
+      :class="[
+        'p-1.5 rounded-md transition-all duration-200 focus:outline-none flex items-center justify-center',
+        modelValue === 'kanban' 
+          ? 'bg-white text-gray-900 shadow-sm' 
+          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+      ]"
+      title="Kanban View"
+    >
+      <Kanban class="w-4 h-4" />
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { List, LayoutGrid } from 'lucide-vue-next';
+import { List, LayoutGrid, Kanban } from 'lucide-vue-next';
 
 defineProps<{
-  modelValue: 'list' | 'grid'
+  modelValue: 'list' | 'grid' | 'kanban',
+  allowKanban?: boolean
 }>();
 
 defineEmits<{
-  (e: 'update:modelValue', value: 'list' | 'grid'): void
+  (e: 'update:modelValue', value: 'list' | 'grid' | 'kanban'): void
 }>();
 </script>

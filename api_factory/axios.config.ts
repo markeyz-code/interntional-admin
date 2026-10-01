@@ -14,6 +14,8 @@ const logOut = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
+    document.cookie = 'admin_token=; Max-Age=0; path=/; sameSite=lax';
+    document.cookie = 'admin_user=; Max-Age=0; path=/; sameSite=lax';
     window.location.href = '/login';
   }
 };
@@ -108,7 +110,15 @@ instanceArray.forEach((instance) => {
       }
       if (err.response.status === 401) {
         console.log(err.response.data?.error)
-        logOut();
+        
+        // Prevent logout loop if the 401 is just a failed login attempt
+        const url = err.config?.url || '';
+        const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/admin/login') || url.includes('/auth/admin/verify-otp');
+        
+        if (!isAuthRoute) {
+          logOut();
+        }
+
         showToast({
           title: "Error",
           message: err?.response?.data?.message || err?.response?.data?.error || "An error occured",

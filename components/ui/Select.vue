@@ -8,8 +8,11 @@
         :id="id"
         type="button"
         @click="toggleDropdown"
-        class="flex w-full items-center justify-between rounded border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors disabled:opacity-50 disabled:bg-gray-50"
-        :class="modelValue === '' && placeholder ? 'text-gray-500' : 'text-gray-900'"
+        class="flex w-full items-center justify-between text-sm focus:outline-none transition-colors disabled:opacity-50 disabled:bg-gray-50"
+        :class="[
+          inputClass || 'rounded border border-gray-300 bg-white px-4 py-2.5 focus:border-brand focus:ring-1 focus:ring-brand',
+          modelValue === '' && placeholder ? 'text-gray-500' : 'text-gray-900'
+        ]"
         :disabled="disabled"
         v-bind="$attrs"
       >
@@ -77,6 +80,7 @@ const props = defineProps({
   disabled: Boolean,
   error: String,
   hint: String,
+  inputClass: String,
 });
 
 const emit = defineEmits(['update:modelValue']);

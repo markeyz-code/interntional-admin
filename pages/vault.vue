@@ -309,8 +309,11 @@ import UiSelect from '@/components/ui/Select.vue';
 import UiTableFilters from '@/components/ui/TableFilters.vue';
 import UiPagination from '@/components/ui/Pagination.vue';
 import UiExportModal from '@/components/ui/ExportModal.vue';
+import { useCustomModal } from '@/composables/core/useCustomModal';
 
 useSeoMeta({ title: 'Vault Management | Admin Dashboard' });
+
+const { alert: modalAlert } = useCustomModal();
 
 const { loading, deleting, uploadProgress, resources, filters, total, totalPages, getResources, uploadResource, deleteResource, updateResource } = useManageVault();
 const viewMode = ref<'list' | 'grid'>('list');
@@ -360,7 +363,13 @@ const closeUploadModal = () => {
 };
 
 const submitUpload = async () => {
-  if (!uploadForm.value.file) return alert('Please select a file');
+  if (!uploadForm.value.file) {
+    return modalAlert({
+      title: 'File Required',
+      message: 'Please select a file to upload.',
+      type: 'warning',
+    });
+  }
   const success = await uploadResource(uploadForm.value as any);
   if (success) closeUploadModal();
 };
@@ -436,7 +445,11 @@ const submitEdit = async () => {
       });
       fileUrl = uploadResult.secure_url;
     } catch (err) {
-      alert('Failed to upload the new file. Please try again.');
+      await modalAlert({
+        title: 'Upload Error',
+        message: 'Failed to upload the new file. Please try again.',
+        type: 'danger',
+      });
       loading.value = false;
       return;
     }

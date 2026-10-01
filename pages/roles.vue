@@ -10,7 +10,13 @@
         <button @click="isExportModalOpen = true" class="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors">
           Export Data
         </button>
-        <button @click="refreshAll" class="px-4 py-2 text-sm font-medium bg-brand text-white rounded hover:bg-[#1f4e70] transition-colors">
+        <button @click="isCreateRoleModalOpen = true" class="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-brand rounded hover:bg-gray-50 transition-colors shadow-sm">
+          Create Role
+        </button>
+        <button @click="isInviteModalOpen = true" class="px-4 py-2 text-sm font-medium bg-brand text-white rounded hover:bg-[#1f4e70] transition-colors shadow-sm">
+          Invite Team Member
+        </button>
+        <button @click="refreshAll" class="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
           Refresh
         </button>
         <UiViewToggle v-model="viewMode" />
@@ -312,6 +318,18 @@
       filename="roles_export"
       @close="isExportModalOpen = false"
     />
+
+    <UiInviteAdminModal 
+      :isOpen="isInviteModalOpen" 
+      @close="isInviteModalOpen = false" 
+      @success="handleInviteSuccess" 
+    />
+
+    <UiCreateRoleModal
+      :isOpen="isCreateRoleModalOpen"
+      @close="isCreateRoleModalOpen = false"
+      @success="handleRoleCreated"
+    />
   </div>
 </template>
 
@@ -324,6 +342,8 @@ import UiViewToggle from '@/components/ui/ViewToggle.vue';
 import UiTableFilters from '@/components/ui/TableFilters.vue';
 import UiPagination from '@/components/ui/Pagination.vue';
 import UiExportModal from '@/components/ui/ExportModal.vue';
+import UiInviteAdminModal from '@/components/ui/InviteAdminModal.vue';
+import UiCreateRoleModal from '@/components/ui/CreateRoleModal.vue';
 import UiSelect from '@/components/ui/Select.vue';
 import UiConfirmationModal from '@/components/ui/ConfirmationModal.vue';
 
@@ -333,6 +353,8 @@ const { loading, allUsers, userStats, filters, total, totalPages, fetchAllUsers,
 
 const viewMode = ref<'list' | 'grid'>('list');
 const isExportModalOpen = ref(false);
+const isInviteModalOpen = ref(false);
+const isCreateRoleModalOpen = ref(false);
 const showPermModal = ref(false);
 const showEditModal = ref(false);
 const showConfirmModal = ref(false);
@@ -360,6 +382,15 @@ const handleRoleChange = async (userId: string, role: string) => {
 
 const handleDepartmentChange = async (userId: string, department: string) => {
   await updateUserDepartment(userId, department);
+};
+
+const handleInviteSuccess = () => {
+  refreshAll();
+};
+
+const handleRoleCreated = () => {
+  isCreateRoleModalOpen.value = false;
+  // Role creation logic
 };
 
 const openEditModal = (user: any) => {

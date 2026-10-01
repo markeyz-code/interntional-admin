@@ -1,23 +1,22 @@
 import { useAuth } from '@/composables/core/useAuth';
 
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to) => {
   const { isLoggedIn, initAuth } = useAuth();
-  
-  // If running on the server, we don't have access to localStorage. 
-  // Skip to prevent SSR layout mismatches (e.g. server renders login page layout, client renders dashboard layout)
-  if (import.meta.server) return;
 
-  if (import.meta.client) {
-    initAuth();
-  }
+  // Run on both server (via request cookies) and client (via storage)
+  initAuth();
 
-  // If the user is not authenticated and trying to access a page other than login
-  if (!isLoggedIn.value && to.path !== '/login') {
+  const publicRoutes = ['/login', '/forgot-password', '/reset-password', '/setup-password'];
+  const isPublicRoute = publicRoutes.includes(to.path);
+
+  // If the user is NOT authenticated, default to showing the login page immediately.
+  // Never render the dashboard layout or dashboard content on SSR for unauthenticated users.
+  if (!isLoggedIn.value && !isPublicRoute) {
     return navigateTo('/login');
   }
 
-  // If the user is logged in and trying to access the login page
-  if (isLoggedIn.value && to.path === '/login') {
+  // If the user IS authenticated and trying to access a public page like login, redirect to root dashboard
+  if (isLoggedIn.value && isPublicRoute) {
     return navigateTo('/');
   }
 });

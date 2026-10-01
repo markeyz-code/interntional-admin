@@ -42,7 +42,7 @@
           </button>
 
           <!-- Body -->
-          <div class="px-6 py-4" style="overflow: visible;">
+          <div class="px-6 py-4 overflow-y-auto" style="max-height: calc(85vh - 120px);">
             <slot />
           </div>
 

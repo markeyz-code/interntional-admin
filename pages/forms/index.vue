@@ -6,9 +6,19 @@
         <h1 class="text-lg font-bold text-gray-900 tracking-tight">Forms Management</h1>
         <p class="text-sm text-gray-500 mt-1">Build custom forms for events, call for papers, article submissions, surveys and more.</p>
       </div>
-      <button @click="openFormBuilder" class="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors shadow-sm">
-        + Create Form
-      </button>
+      <div class="flex items-center gap-3">
+        <div class="bg-gray-100 p-1 rounded-lg flex items-center border border-gray-200">
+          <button @click="viewMode = 'list'" :class="viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'" class="p-1.5 rounded-md transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <button @click="viewMode = 'grid'" :class="viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'" class="p-1.5 rounded-md transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          </button>
+        </div>
+        <button @click="openFormBuilder" class="px-4 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:bg-brand/90 transition-colors shadow-sm">
+          + Create Form
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -16,11 +26,11 @@
       <div class="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
     </div>
 
-    <!-- Forms Grid -->
-    <div v-else-if="forms.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="form in forms" :key="form._id" class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group">
-        <div class="h-2" :class="formTypeColor(form.type)"></div>
-        <div class="p-5">
+    <!-- Forms List/Grid -->
+    <div v-else-if="forms.length > 0" :class="viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4'">
+      <div v-for="form in forms" :key="form._id" :class="viewMode === 'grid' ? 'flex-col' : 'flex-row items-stretch'" class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all group flex">
+        <div :class="[viewMode === 'grid' ? 'h-2 w-full' : 'w-2 h-auto', formTypeColor(form.type)]"></div>
+        <div class="p-5 flex-1" :class="viewMode === 'grid' ? '' : 'flex flex-col justify-center'">
           <div class="flex items-center justify-between mb-3">
             <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full" :class="formStatusClass(form.status)">{{ form.status }}</span>
             <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ formTypeLabel(form.type) }}</span>
@@ -35,8 +45,11 @@
             </button>
           </div>
         </div>
-        <div class="border-t border-gray-100 px-5 py-3 flex items-center justify-between bg-gray-50/50">
-          <button @click="copyFormLink(form)" class="text-xs font-medium text-green-600 hover:text-green-800 transition-colors">🔗 Copy Link</button>
+        <div :class="viewMode === 'grid' ? 'border-t px-5 py-3 justify-between' : 'border-l px-6 py-4 flex-col justify-center'" class="border-gray-100 flex items-center bg-gray-50/50 gap-5 min-w-[150px]">
+          <button @click="copyFormLink(form)" class="text-xs font-medium text-green-600 hover:text-green-800 transition-colors flex gap-1 items-center">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            Copy Link
+          </button>
           <div class="flex items-center gap-3">
             <button @click="editForm(form)" class="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">Edit</button>
             <button @click="confirmDeleteForm(form)" class="text-xs font-medium text-red-600 hover:text-red-800 transition-colors">Delete</button>
@@ -58,20 +71,21 @@
     <Teleport to="body">
       <Transition name="slide-up">
         <div v-if="isBuilderOpen" class="fixed inset-0 z-[9999] bg-gray-50 overflow-y-auto">
-          <!-- Top Bar -->
-          <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm">
-            <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-              <button @click="isBuilderOpen = false" class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to Forms
-              </button>
-              <div class="flex items-center gap-3">
-                <button @click="saveForm" :disabled="savingForm" class="px-5 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-[#1f4e70] transition-colors shadow-sm disabled:opacity-50">
-                  {{ savingForm ? 'Saving...' : (isEditMode ? 'Update Form' : 'Create Form') }}
+          <form @submit.prevent="saveForm">
+            <!-- Top Bar -->
+            <div class="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-gray-200 shadow-sm">
+              <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+                <button type="button" @click="isBuilderOpen = false" class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                  Back to Forms
                 </button>
+                <div class="flex items-center gap-3">
+                  <button type="submit" :disabled="savingForm" class="px-5 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-[#1f4e70] transition-colors shadow-sm disabled:opacity-50">
+                    {{ savingForm ? 'Saving...' : (isEditMode ? 'Update Form' : 'Create Form') }}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
           <!-- Builder Content -->
           <div class="max-w-6xl mx-auto px-6 py-8">
@@ -111,6 +125,27 @@
                       <input type="checkbox" v-model="formData.allowMultipleSubmissions" class="rounded border-gray-300 text-brand focus:ring-brand" />
                       <span class="text-sm font-medium text-gray-700">Allow Multiple Submissions</span>
                     </label>
+
+                    <!-- Cover Image Upload -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Cover Image</label>
+                      <div class="relative w-full h-40 bg-gray-100 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:bg-gray-50 hover:border-brand/50 transition-all cursor-pointer group overflow-hidden" @click="($refs as any).coverInput?.click()">
+                        <img v-if="formData.coverImage || formData.coverImagePreview" :src="formData.coverImagePreview || formData.coverImage" class="absolute inset-0 w-full h-full object-cover z-10" />
+                        <div v-if="formData.coverImage || formData.coverImagePreview" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center justify-center">
+                          <span class="text-white text-xs font-bold">Change Image</span>
+                        </div>
+                        <template v-if="!(formData.coverImage || formData.coverImagePreview)">
+                          <svg v-if="!uploadingCover" class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                          <p v-if="!uploadingCover" class="text-xs text-gray-400">Click to upload</p>
+                          <div v-if="uploadingCover" class="flex flex-col items-center">
+                            <div class="w-8 h-8 border-3 border-brand/20 border-t-brand rounded-full animate-spin mb-2"></div>
+                            <p class="text-xs text-brand font-medium">{{ coverProgress }}%</p>
+                          </div>
+                        </template>
+                      </div>
+                      <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="handleCoverUpload" />
+                      <button v-if="formData.coverImage || formData.coverImagePreview" @click.prevent="formData.coverImage = ''; formData.coverImagePreview = ''; formData.coverImageFile = null;" type="button" class="mt-2 text-xs text-red-500 hover:text-red-700 font-medium">Remove Image</button>
+                    </div>
                   </div>
                 </div>
 
@@ -156,20 +191,7 @@
                         </div>
                         <div>
                           <label class="block text-[11px] font-medium text-gray-500 mb-1">Type</label>
-                          <select v-model="field.type" class="w-full px-2.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-brand focus:border-brand bg-white">
-                            <option value="text">Short Text</option>
-                            <option value="textarea">Long Text</option>
-                            <option value="rich-text">Rich Text Editor</option>
-                            <option value="email">Email</option>
-                            <option value="phone">Phone</option>
-                            <option value="number">Number</option>
-                            <option value="date">Date</option>
-                            <option value="url">URL / Link</option>
-                            <option value="select">Dropdown</option>
-                            <option value="radio">Radio Buttons</option>
-                            <option value="checkbox">Checkboxes</option>
-                            <option value="file">File Upload</option>
-                          </select>
+                          <UiSelect :id="`field-type-${idx}`" v-model="field.type" :options="fieldTypeOptions" inputClass="w-full px-2.5 py-2 border border-gray-300 rounded-lg text-sm focus:ring-brand focus:border-brand bg-white" />
                         </div>
                       </div>
                       <div class="grid grid-cols-2 gap-3 mt-3">
@@ -210,51 +232,12 @@
               </div>
             </div>
           </div>
+          </form>
         </div>
       </Transition>
     </Teleport>
 
-    <!-- ===================== SUBMISSIONS MODAL ===================== -->
-    <UiModal :isOpen="isSubsModalOpen" :title="`Responses — ${activeForm?.title || ''}`" @close="isSubsModalOpen = false">
-      <div class="space-y-4 px-2 pb-4">
-        <div v-if="subsLoading" class="flex justify-center py-8">
-          <div class="w-6 h-6 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <div v-else-if="submissions.length === 0" class="text-center py-8 text-gray-500 text-sm">No submissions yet.</div>
-        <div v-else>
-          <div class="mb-4 text-sm font-bold text-gray-900">{{ submissions.length }} Responses</div>
-          <div class="max-h-[50vh] overflow-y-auto space-y-3">
-            <div v-for="sub in submissions" :key="sub._id" class="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <div class="flex items-center justify-between mb-2">
-                <div>
-                  <span class="font-medium text-gray-900 text-sm">{{ sub.submitterName || 'Anonymous' }}</span>
-                  <span class="text-xs text-gray-400 ml-2">{{ sub.submitterEmail }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <select v-model="sub.status" @change="updateSubStatus(sub)" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-gray-200 bg-white">
-                    <option value="submitted">Submitted</option>
-                    <option value="under-review">Under Review</option>
-                    <option value="accepted">Accepted</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <button @click="deleteSub(sub._id)" class="text-red-500 hover:bg-red-100 p-1 rounded text-xs">✕</button>
-                </div>
-              </div>
-              <div class="space-y-1.5">
-                <div v-for="(val, key) in sub.data" :key="key" class="text-xs">
-                  <span class="font-medium text-gray-600">{{ key }}:</span>
-                  <span class="text-gray-800 ml-1">{{ val }}</span>
-                </div>
-              </div>
-              <div class="text-[10px] text-gray-400 mt-2">{{ new Date(sub.createdAt).toLocaleString() }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <button @click="isSubsModalOpen = false" class="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded font-medium transition-colors">Close</button>
-      </template>
-    </UiModal>
+    <!-- Submissions have been moved to a standalone page -->
 
     <!-- Delete Confirmation -->
     <UiModal :isOpen="isDeleteOpen" title="Delete Form" @close="isDeleteOpen = false">
@@ -274,10 +257,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useSeoMeta } from '#imports';
+import axios from 'axios';
 import UiModal from '@/components/ui/Modal.vue';
 import UiSelect from '@/components/ui/Select.vue';
 import { formsApi } from '@/api_factory/modules/forms';
+import { storageApi } from '@/api_factory/modules/storage';
 import { useCustomToast } from '@/composables/core/useCustomToast';
+import * as XLSX from 'xlsx';
 
 useSeoMeta({ title: 'Forms Management | Admin Dashboard' });
 
@@ -285,6 +271,7 @@ const { showToast } = useCustomToast();
 const forms = ref<any[]>([]);
 const loading = ref(true);
 const subCounts = ref<Record<string, number>>({});
+const viewMode = ref<'list' | 'grid'>('list');
 
 // Builder
 const isBuilderOpen = ref(false);
@@ -295,14 +282,15 @@ const editFormId = ref('');
 const formData = ref<any>({
   title: '', description: '', type: 'custom', status: 'draft', deadline: '',
   maxSubmissions: 0, successMessage: 'Thank you for your submission!',
-  allowMultipleSubmissions: true, fields: [],
+  allowMultipleSubmissions: true, coverImage: '', fields: [],
 });
 
-// Submissions
-const isSubsModalOpen = ref(false);
-const subsLoading = ref(false);
+// Cover image upload
+const uploadingCover = ref(false);
+const coverProgress = ref(0);
+
+// Submissions moved to standalone page
 const activeForm = ref<any>(null);
-const submissions = ref<any[]>([]);
 
 // Delete
 const isDeleteOpen = ref(false);
@@ -317,6 +305,21 @@ const formTypeOptions = [
   { label: 'Survey', value: 'survey' },
   { label: 'Feedback', value: 'feedback' },
   { label: 'Custom', value: 'custom' },
+];
+
+const fieldTypeOptions = [
+  { label: 'Short Text', value: 'text' },
+  { label: 'Long Text', value: 'textarea' },
+  { label: 'Rich Text Editor', value: 'rich-text' },
+  { label: 'Email', value: 'email' },
+  { label: 'Phone', value: 'phone' },
+  { label: 'Number', value: 'number' },
+  { label: 'Date', value: 'date' },
+  { label: 'URL / Link', value: 'url' },
+  { label: 'Dropdown', value: 'select' },
+  { label: 'Radio Buttons', value: 'radio' },
+  { label: 'Checkboxes', value: 'checkbox' },
+  { label: 'File Upload', value: 'file' },
 ];
 
 const templates = [
@@ -405,7 +408,7 @@ const openFormBuilder = () => {
   formData.value = {
     title: '', description: '', type: 'custom', status: 'draft', deadline: '',
     maxSubmissions: 0, successMessage: 'Thank you for your submission!',
-    allowMultipleSubmissions: true, fields: [],
+    allowMultipleSubmissions: true, coverImage: '', coverImagePreview: '', coverImageFile: null, fields: [],
   };
   isBuilderOpen.value = true;
 };
@@ -418,6 +421,7 @@ const editForm = (form: any) => {
     deadline: form.deadline ? new Date(form.deadline).toISOString().slice(0, 16) : '',
     maxSubmissions: form.maxSubmissions || 0, successMessage: form.successMessage || '',
     allowMultipleSubmissions: form.allowMultipleSubmissions !== false,
+    coverImage: form.coverImage || '',
     fields: (form.fields || []).map((f: any) => ({ ...f })),
   };
   isBuilderOpen.value = true;
@@ -444,11 +448,18 @@ const saveForm = async () => {
   if (!formData.value.title) { showToast({ title: 'Error', message: 'Form title is required', type: 'error' }); return; }
   savingForm.value = true;
   try {
+    if (formData.value.coverImageFile) {
+      await performCoverUpload(formData.value.coverImageFile);
+    }
+    const payload = JSON.parse(JSON.stringify(formData.value));
+    delete payload.coverImagePreview;
+    delete payload.coverImageFile;
+
     if (isEditMode.value) {
-      await formsApi.updateForm(editFormId.value, formData.value);
+      await formsApi.updateForm(editFormId.value, payload);
       showToast({ title: 'Updated', message: 'Form updated successfully', type: 'success' });
     } else {
-      await formsApi.createForm(formData.value);
+      await formsApi.createForm(payload);
       showToast({ title: 'Created', message: 'Form created successfully', type: 'success' });
     }
     isBuilderOpen.value = false;
@@ -459,7 +470,7 @@ const saveForm = async () => {
 
 const copyFormLink = async (form: any) => {
   const slug = form.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || 'form';
-  const baseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://universe.medlabconvo.com';
+  const baseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:3003' : 'https://universe.medlabconvo.com';
   const url = `${baseUrl}/forms/${slug}-${form._id}`;
   try {
     await navigator.clipboard.writeText(url);
@@ -467,27 +478,12 @@ const copyFormLink = async (form: any) => {
   } catch (e) { showToast({ title: 'Failed', message: 'Could not copy link.', type: 'error' }); }
 };
 
-const viewSubmissions = async (form: any) => {
-  activeForm.value = form;
-  isSubsModalOpen.value = true;
-  subsLoading.value = true;
-  try {
-    const res = await formsApi.getSubmissions(form._id);
-    submissions.value = res.data || res;
-  } catch (e) { console.error(e); } finally { subsLoading.value = false; }
+const viewSubmissions = (form: any) => {
+  const router = useRouter();
+  router.push(`/forms/${form._id}/submissions`);
 };
 
-const updateSubStatus = async (sub: any) => {
-  try { await formsApi.updateSubmission(sub._id, { status: sub.status }); } catch (e) { console.error(e); }
-};
-
-const deleteSub = async (id: string) => {
-  try {
-    await formsApi.deleteSubmission(id);
-    submissions.value = submissions.value.filter(s => s._id !== id);
-    showToast({ title: 'Removed', message: 'Submission deleted.', type: 'success' });
-  } catch (e) { showToast({ title: 'Error', message: 'Failed to delete.', type: 'error' }); }
-};
+// Moved to standalone page
 
 const confirmDeleteForm = (form: any) => { activeForm.value = form; isDeleteOpen.value = true; };
 const deleteFormAction = async () => {
@@ -502,4 +498,153 @@ const deleteFormAction = async () => {
 };
 
 onMounted(() => fetchForms());
+
+// Cloudinary cover image upload handler
+const handleCoverUpload = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    showToast({ title: 'Error', message: 'Please select an image file', type: 'error' });
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast({ title: 'Error', message: 'Image must be less than 5MB', type: 'error' });
+    return;
+  }
+  formData.value.coverImageFile = file;
+  formData.value.coverImagePreview = URL.createObjectURL(file);
+};
+
+const performCoverUpload = async (file: File) => {
+  uploadingCover.value = true;
+  coverProgress.value = 0;
+
+  try {
+    const { data: sigData } = await storageApi.getUploadSignature({ folder: 'interntional/forms' });
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('api_key', sigData.apiKey);
+    fd.append('timestamp', sigData.timestamp.toString());
+    fd.append('signature', sigData.signature);
+    fd.append('folder', sigData.folder);
+    if (sigData.eager) fd.append('eager', sigData.eager);
+
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`;
+    const { data: uploadResult } = await axios.post(cloudinaryUrl, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (ev) => {
+        if (ev.total) coverProgress.value = Math.round((ev.loaded / ev.total) * 100);
+      },
+    });
+
+    formData.value.coverImage = uploadResult.secure_url;
+  } catch (err) {
+    console.error(err);
+    throw new Error('Failed to upload image');
+  } finally {
+    uploadingCover.value = false;
+  }
+};
+
+const isHtmlContent = (val: string): boolean => {
+  if (!val || typeof val !== 'string') return false;
+  return /<[a-z][\s\S]*>/i.test(val);
+};
 </script>
+
+<style scoped>
+/* Rendered HTML content in responses */
+.response-html-content :deep(h1) {
+  font-size: 1.5em;
+  font-weight: 700;
+  margin: 0.4em 0 0.2em;
+  color: #111827;
+}
+.response-html-content :deep(h2) {
+  font-size: 1.25em;
+  font-weight: 700;
+  margin: 0.3em 0 0.15em;
+  color: #1f2937;
+}
+.response-html-content :deep(h3) {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.25em 0 0.1em;
+  color: #374151;
+}
+.response-html-content :deep(p) {
+  margin: 0.25em 0;
+  line-height: 1.6;
+}
+.response-html-content :deep(ul) {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.3em 0;
+}
+.response-html-content :deep(ol) {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.3em 0;
+}
+.response-html-content :deep(li) {
+  margin: 0.1em 0;
+}
+.response-html-content :deep(blockquote) {
+  border-left: 3px solid #60a5fa;
+  padding: 0.4em 0.8em;
+  margin: 0.4em 0;
+  background: #eff6ff;
+  border-radius: 0 6px 6px 0;
+  color: #1e40af;
+  font-style: italic;
+}
+.response-html-content :deep(pre) {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 0.8em;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.85em;
+  overflow-x: auto;
+  margin: 0.4em 0;
+}
+.response-html-content :deep(code) {
+  background: #f3f4f6;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #e11d48;
+}
+.response-html-content :deep(a) {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.response-html-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 6px 0;
+}
+.response-html-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0;
+}
+.response-html-content :deep(th),
+.response-html-content :deep(td) {
+  border: 1px solid #d1d5db;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 0.85em;
+}
+.response-html-content :deep(th) {
+  background: #f9fafb;
+  font-weight: 600;
+}
+.response-html-content :deep(hr) {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.6em 0;
+}
+</style>

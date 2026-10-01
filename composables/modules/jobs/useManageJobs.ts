@@ -62,6 +62,7 @@ export const useManageJobs = () => {
     location: string;
     description: string;
     link: string;
+    status?: string;
   }) => {
     creating.value = true;
     try {
@@ -92,6 +93,20 @@ export const useManageJobs = () => {
     }
   };
 
+  const updateJob = async (id: string, payload: any) => {
+    try {
+      await jobsApi.updateJob(id, payload);
+      const index = jobs.value.findIndex(j => j._id === id);
+      if (index !== -1) {
+        jobs.value[index] = { ...jobs.value[index], ...payload };
+      }
+      return true;
+    } catch (err: any) {
+      showToast({ title: 'Error', message: 'Failed to update job status.', type: 'error' });
+      return false;
+    }
+  };
+
   return { 
     loading, 
     creating, 
@@ -100,8 +115,9 @@ export const useManageJobs = () => {
     filters,
     total,
     totalPages,
-    fetchJobs, 
-    createJob, 
-    deleteJob 
+    fetchJobs,
+    createJob,
+    updateJob,
+    deleteJob
   };
 };

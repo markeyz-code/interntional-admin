@@ -137,8 +137,39 @@
           <input v-model="form.meetingLink" type="url" placeholder="https://zoom.us/j/..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand focus:border-brand" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image URL</label>
-          <input v-model="form.coverImage" type="url" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-brand focus:border-brand" />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+          <div class="flex items-center gap-4">
+            <input 
+              type="file" 
+              accept="image/*" 
+              class="hidden" 
+              ref="coverImageInput" 
+              @change="onCoverImageSelected" 
+            />
+            <button 
+              type="button" 
+              @click="$refs.coverImageInput.click()" 
+              class="px-3 py-1.5 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors disabled:opacity-50"
+              :disabled="uploadingCover"
+            >
+              <svg v-if="uploadingCover" class="animate-spin w-4 h-4 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              {{ uploadingCover ? 'Uploading...' : (form.coverImage || form.coverImagePreview ? 'Change Image' : 'Upload Image') }}
+            </button>
+            <span v-if="(form.coverImage || form.coverImagePreview) && !uploadingCover" class="text-sm text-green-600 font-medium flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Selected
+            </span>
+            <button 
+              v-if="(form.coverImage || form.coverImagePreview) && !uploadingCover" 
+              type="button" 
+              @click="form.coverImage = ''; form.coverImagePreview = ''; form.coverImageFile = null;" 
+              class="text-sm text-red-600 hover:underline"
+            >
+              Remove
+            </button>
+          </div>
+          <div v-if="form.coverImage || form.coverImagePreview" class="mt-3 relative w-full h-40 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+            <img :src="form.coverImagePreview || form.coverImage" class="w-full h-full object-cover" />
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -224,7 +255,9 @@ import UiTableFilters from '@/components/ui/TableFilters.vue';
 import UiModal from '@/components/ui/Modal.vue';
 import UiSelect from '@/components/ui/Select.vue';
 import { eventsApi } from '@/api_factory/modules/events';
+import { storageApi } from '@/api_factory/modules/storage';
 import { useCustomToast } from '@/composables/core/useCustomToast';
+import axios from 'axios';
 
 useSeoMeta({ title: 'Events - Admin Dashboard' });
 
@@ -242,6 +275,8 @@ const isEdit = ref(false);
 const isSaving = ref(false);
 const isDeleting = ref(false);
 const regLoading = ref(false);
+const uploadingCover = ref(false);
+const coverImageInput = ref<HTMLInputElement | null>(null);
 const activeItem = ref<any>(null);
 const registrations = ref<any[]>([]);
 
@@ -254,9 +289,9 @@ const form = ref({
   speaker: '',
   type: 'in-person',
   meetingLink: '',
-  capacity: 0,
   coverImage: '',
-  status: 'upcoming',
+  coverImagePreview: '',
+  coverImageFile: null as File | null,
   price: 0,
   isMembersOnly: false,
   registrationOpen: true,
@@ -374,14 +409,58 @@ const removeRegistration = async (regId: string) => {
   }
 };
 
+const onCoverImageSelected = async (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+
+  form.value.coverImageFile = file;
+  form.value.coverImagePreview = URL.createObjectURL(file);
+};
+
+const uploadCoverImage = async () => {
+  if (!form.value.coverImageFile) return form.value.coverImage;
+  
+  uploadingCover.value = true;
+  try {
+    const { data: sigData } = await storageApi.getUploadSignature();
+    
+    const formData = new FormData();
+    formData.append('file', form.value.coverImageFile);
+    formData.append('api_key', sigData.apiKey);
+    formData.append('timestamp', sigData.timestamp);
+    formData.append('signature', sigData.signature);
+    if (sigData.folder) formData.append('folder', sigData.folder);
+
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/image/upload`;
+    const { data: uploadResult } = await axios.post(cloudinaryUrl, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    return uploadResult.secure_url;
+  } catch (err: any) {
+    console.error('Image upload failed:', err);
+    throw new Error('Failed to upload image.');
+  } finally {
+    uploadingCover.value = false;
+  }
+};
+
 const saveEvent = async () => {
   try {
     isSaving.value = true;
+    if (form.value.coverImageFile) {
+      form.value.coverImage = await uploadCoverImage();
+    }
+    const payload = { ...form.value };
+    delete payload.coverImagePreview;
+    delete payload.coverImageFile;
+
     if (isEdit.value) {
-      await eventsApi.updateEvent(activeItem.value._id, form.value);
+      await eventsApi.updateEvent(activeItem.value._id, payload);
       showToast({ title: 'Success', message: 'Event updated successfully', type: 'success' });
     } else {
-      await eventsApi.createEvent(form.value);
+      await eventsApi.createEvent(payload);
       showToast({ title: 'Success', message: 'Event created successfully', type: 'success' });
     }
     isModalOpen.value = false;
