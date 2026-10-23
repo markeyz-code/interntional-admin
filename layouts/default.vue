@@ -144,7 +144,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { Users, Folder, Briefcase, LogOut, MessageSquare, CreditCard, Wallet, LayoutDashboard, BarChart2, Shield, Layers, ChevronDown, ChevronLeft, ChevronRight, Check, GraduationCap, FlaskConical, Building2, Calendar, ClipboardList, Menu as MenuIcon, X as XIcon, ShoppingBag, BookOpen, Target } from 'lucide-vue-next';
+import { Users, Folder, Briefcase, LogOut, MessageSquare, CreditCard, Wallet, LayoutDashboard, BarChart2, Shield, Layers, ChevronDown, ChevronLeft, ChevronRight, Check, GraduationCap, FlaskConical, Building2, Calendar, ClipboardList, Menu as MenuIcon, X as XIcon, ShoppingBag, BookOpen, Target, Sliders } from 'lucide-vue-next';
 import { useAuth } from '@/composables/core/useAuth';
 import { useBusinessContext, type BusinessType } from '@/composables/core/useBusinessContext';
 
@@ -164,6 +164,7 @@ const icons: Record<string, any> = {
   Folder,
   Briefcase,
   Layers,
+  Sliders,
   MessageSquare,
   CreditCard,
   Wallet,
