@@ -3,7 +3,7 @@
     <div class="bg-white p-6 border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
       <div>
         <h1 class="text-lg font-bold text-gray-900 tracking-tight">Pending Approvals</h1>
-        <p class="text-sm text-gray-500 mt-1">Review and approve or reject new account registrations.</p>
+        <p class="text-sm text-gray-500 mt-1">Review the uploaded document, then approve or reject. Students choose a subscription plan only after approval.</p>
       </div>
       <div class="flex items-center gap-3 w-full sm:w-auto flex-wrap">
         <UiViewToggle v-model="viewMode" />
@@ -53,6 +53,12 @@
                 <span class="text-gray-500 block mb-1">Department</span>
                 <span class="font-medium text-gray-900 capitalize">{{ user.department.toLowerCase().replace('_', ' ') }}</span>
               </div>
+              <div class="col-span-2">
+                <span class="text-gray-500 block mb-1">Verification document</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-violet-50 text-violet-700 text-[11px] font-semibold">
+                  {{ documentLabel(user.verificationDocumentType) }}
+                </span>
+              </div>
             </div>
           </div>
           <div class="grid grid-cols-3 gap-0 border-t border-gray-200">
@@ -90,8 +96,8 @@
             <tr>
               <th scope="col" class="px-6 py-4 font-semibold text-gray-900">User</th>
               <th scope="col" class="px-6 py-4 font-semibold text-gray-900">Email</th>
-              <th scope="col" class="px-6 py-4 font-semibold text-gray-900">Role</th>
               <th scope="col" class="px-6 py-4 font-semibold text-gray-900">Department</th>
+              <th scope="col" class="px-6 py-4 font-semibold text-gray-900">Document</th>
               <th scope="col" class="px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
             </tr>
           </thead>
@@ -106,13 +112,13 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ user.email }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  {{ user.role.replace('_', ' ') }}
-                </span>
-              </td>
               <td class="px-6 py-4 whitespace-nowrap text-gray-600 capitalize">
                 {{ user.department.toLowerCase().replace('_', ' ') }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-violet-50 text-violet-700 text-[11px] font-semibold">
+                  {{ documentLabel(user.verificationDocumentType) }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
                 <div class="flex items-center justify-end gap-3">
@@ -167,7 +173,7 @@
     <UiConfirmationModal 
       :isOpen="showApproveModal"
       title="Approve User"
-      :message="`Are you sure you want to approve ${selectedUser?.firstName}'s account? An email will be sent to them to set up their password.`"
+      :message="`Approve ${selectedUser?.firstName}'s verification? An approval email will be sent to their registered address. UniVerse students choose and pay for a subscription plan after approval.`"
       confirmText="Approve"
       @confirm="handleApprove"
       @close="showApproveModal = false"
@@ -206,6 +212,21 @@ const { loading, pendingUsers, filters, total, totalPages, getPendingUsers } = u
 const { loading: actionLoading, approveUser, rejectUser } = useApproveUser();
 
 const viewMode = ref<'list' | 'grid'>('list');
+
+const DOCUMENT_LABELS: Record<string, string> = {
+  STUDENT_ID: 'School ID card',
+  SCHOOL_FEES_RECEIPT: 'School fees receipt',
+  COURSE_REGISTRATION_FORM: 'Course registration form',
+  ADMISSION_LETTER: 'Admission letter',
+  OTHER: 'Other school document',
+  INTERNSHIP_POSTING_LETTER: 'Internship posting letter',
+  PROVISIONAL_LICENSE: 'Provisional / full licence',
+  DEGREE_ATTESTATION: 'Degree / attestation',
+  HOSPITAL_ID: 'Hospital / lab ID',
+  OTHER_PROFESSIONAL: 'Other professional document',
+};
+const documentLabel = (type?: string) =>
+  type ? DOCUMENT_LABELS[type] || type.replace(/_/g, ' ').toLowerCase() : 'Not specified';
 
 // Confirmation Logic
 const showApproveModal = ref(false);

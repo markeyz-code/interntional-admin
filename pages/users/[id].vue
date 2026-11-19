@@ -95,7 +95,16 @@
 
       <!-- Documents Tab -->
       <div v-if="activeTab === 'documents'" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h3 class="text-lg font-bold text-gray-900 mb-6">Verification Document</h3>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Verification Document</h3>
+        <div class="flex flex-wrap items-center gap-2 text-xs mb-6">
+          <span class="px-2.5 py-1 rounded-md bg-violet-50 text-violet-700 font-semibold">
+            {{ documentLabel(user.verificationDocumentType) }}
+          </span>
+          <span v-if="user.verificationReviewedAt" class="px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 font-medium">
+            Reviewed {{ new Date(user.verificationReviewedAt).toLocaleString() }}
+            <template v-if="user.verificationReviewedBy"> · {{ user.verificationReviewedBy }}</template>
+          </span>
+        </div>
         <div v-if="user.verificationFileUrl" class="max-w-xl mx-auto border rounded-xl overflow-hidden bg-gray-50 p-4">
           <div class="aspect-[4/3] rounded-lg overflow-hidden bg-gray-200 mb-4 shadow-inner relative flex items-center justify-center">
              <template v-if="user.verificationFileUrl.endsWith('.pdf')">
@@ -184,6 +193,15 @@
           
           <button 
             v-if="user.status === 'APPROVED'"
+            @click="handleResendApproval"
+            :disabled="actionLoading"
+            class="w-full py-3 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+          >
+            <Mail class="w-5 h-5" /> Resend Approval Email
+          </button>
+
+          <button 
+            v-if="user.status === 'APPROVED'"
             @click="handleRevoke"
             :disabled="actionLoading"
             class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center justify-center gap-2"
@@ -204,7 +222,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { ArrowLeft, RefreshCw, FileText, ExternalLink, Check, X, Ban } from 'lucide-vue-next';
+import { ArrowLeft, RefreshCw, FileText, ExternalLink, Check, X, Ban, Mail } from 'lucide-vue-next';
 import { usersApi } from '@/api_factory/modules/users';
 import { useCustomToast } from '@/composables/core/useCustomToast';
 
@@ -224,6 +242,21 @@ const tabs = [
   { id: 'actions', name: 'Actions' },
 ];
 
+const DOCUMENT_LABELS: Record<string, string> = {
+  STUDENT_ID: 'School ID card',
+  SCHOOL_FEES_RECEIPT: 'School fees receipt',
+  COURSE_REGISTRATION_FORM: 'Course registration form',
+  ADMISSION_LETTER: 'Admission letter',
+  OTHER: 'Other school document',
+  INTERNSHIP_POSTING_LETTER: 'Internship posting letter',
+  PROVISIONAL_LICENSE: 'Provisional / full licence',
+  DEGREE_ATTESTATION: 'Degree / attestation',
+  HOSPITAL_ID: 'Hospital / lab ID',
+  OTHER_PROFESSIONAL: 'Other professional document',
+};
+const documentLabel = (type?: string) =>
+  type ? DOCUMENT_LABELS[type] || type.replace(/_/g, ' ').toLowerCase() : 'Not specified';
+
 const fetchUser = async () => {
   loading.value = true;
   try {
@@ -239,8 +272,12 @@ const fetchUser = async () => {
 const handleApprove = async () => {
   actionLoading.value = true;
   try {
-    await usersApi.approveUser(userId);
-    showToast({ title: 'Success', message: 'User approved successfully', type: 'success' });
+    const res = await usersApi.approveUser(userId);
+    if (res.data?.approvalEmailSent === false) {
+      showToast({ title: 'Approved — email not sent', message: 'Use “Resend Approval Email” to try again.', type: 'error' });
+    } else {
+      showToast({ title: 'Success', message: 'User approved. An approval email has been sent.', type: 'success' });
+    }
     await fetchUser();
   } catch (err: any) {
     showToast({ title: 'Error', message: 'Failed to approve user', type: 'error' });
@@ -249,11 +286,32 @@ const handleApprove = async () => {
   }
 };
 
+const handleResendApproval = async () => {
+  actionLoading.value = true;
+  try {
+    const res = await usersApi.resendApproval(userId);
+    if (res.data?.approvalEmailSent === false) {
+      showToast({ title: 'Email not sent', message: 'The approval email could not be delivered. Check the email provider and try again.', type: 'error' });
+    } else {
+      showToast({ title: 'Approval email resent', message: 'The applicant has been emailed again.', type: 'success' });
+    }
+    await fetchUser();
+  } catch (err: any) {
+    showToast({ title: 'Error', message: 'Failed to resend approval email', type: 'error' });
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
 const handleReject = async () => {
   actionLoading.value = true;
   try {
-    await usersApi.rejectUser(userId);
-    showToast({ title: 'Success', message: 'User rejected successfully', type: 'success' });
+    const res = await usersApi.rejectUser(userId);
+    if (res.data?.rejectionEmailSent === false) {
+      showToast({ title: 'Rejected — email not sent', message: 'The decision was saved, but the applicant email could not be delivered.', type: 'error' });
+    } else {
+      showToast({ title: 'Success', message: 'User rejected and notified by email.', type: 'success' });
+    }
     await fetchUser();
   } catch (err: any) {
     showToast({ title: 'Error', message: 'Failed to reject user', type: 'error' });
