@@ -11,6 +11,11 @@ export const usersApi = {
     return GATEWAY_ENDPOINT_WITH_AUTH.patch(`/users/${id}/approve`);
   },
 
+  /** Resend the approval email for an approved user */
+  resendApproval(id: string) {
+    return GATEWAY_ENDPOINT_WITH_AUTH.post(`/users/${id}/resend-approval`);
+  },
+
   /** Reject a user's application */
   rejectUser(id: string) {
     return GATEWAY_ENDPOINT_WITH_AUTH.patch(`/users/${id}/reject`);

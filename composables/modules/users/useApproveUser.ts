@@ -10,7 +10,15 @@ export const useApproveUser = () => {
     loading.value = id;
     try {
       const { data } = await usersApi.approveUser(id);
-      showToast({ title: 'User Approved', message: 'The 24-month intern subscription timer has started.', type: 'success' });
+      if (data?.approvalEmailSent === false) {
+        showToast({
+          title: 'Approved — email not sent',
+          message: 'The account was approved, but the approval email could not be delivered. Use “Resend Approval Email” on the user page.',
+          type: 'error',
+        });
+      } else {
+        showToast({ title: 'User Approved', message: 'Applicant approved. An approval email has been sent.', type: 'success' });
+      }
       return data;
     } catch (err: any) {
       const message = err.response?.data?.message || 'Failed to approve user.';
@@ -25,7 +33,15 @@ export const useApproveUser = () => {
     loading.value = id;
     try {
       const { data } = await usersApi.rejectUser(id);
-      showToast({ title: 'Application Rejected', message: 'The user has been notified.', type: 'info' });
+      if (data?.rejectionEmailSent === false) {
+        showToast({
+          title: 'Rejected — email not sent',
+          message: 'The application was rejected, but the notification email could not be delivered.',
+          type: 'error',
+        });
+      } else {
+        showToast({ title: 'Application Rejected', message: 'The user has been notified.', type: 'info' });
+      }
       return data;
     } catch (err: any) {
       const message = err.response?.data?.message || 'Failed to reject user.';
